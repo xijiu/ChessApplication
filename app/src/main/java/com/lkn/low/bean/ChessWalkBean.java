@@ -1,7 +1,7 @@
-package com.lkn.chess.bean;
+package com.lkn.low.bean;
 
-import com.lkn.chess.Conf;
-import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.low.Configure;
+import com.lkn.low.bean.chess_piece.AbstractChessPiece;
 
 /**
  * 下棋步骤的实体bean
@@ -42,7 +42,7 @@ public class ChessWalkBean {
 	public Integer walkValue(){
 		int val = 0;
 		if(isEat){
-			if(eatenPiece.getPLAYER_ROLE().equals(Conf.getComputerRole())){	// 如果被吃的棋子为电脑本身
+			if(eatenPiece.getPLAYER_ROLE().equals(Configure.getComputerRole())){	// 如果被吃的棋子为电脑本身
 				val = -fightVal;
 			}else {
 				val = fightVal;
@@ -73,7 +73,7 @@ public class ChessWalkBean {
 		AbstractChessPiece eatenPiece = null;	//  被吃掉的棋子，如果没有发生吃子行为，那么将返回null
 		if(endPosition.isExistPiece()){	// 如果存在吃子行为
 			eatenPiece = endPosition.getPiece();
-			eatenPiece.setAlive(false);	// 被吃掉的棋子设置为不在战斗
+			eatenPiece.setFight(false);	// 被吃掉的棋子设置为不在战斗
 		}
 		AbstractChessPiece walkPiece = beginPosition.getPiece();
 		beginPosition.setPiece(null);	// 将之前的位置设置为null
@@ -93,7 +93,7 @@ public class ChessWalkBean {
 		AbstractChessPiece beginPiece = arr[0];
 		AbstractChessPiece endPiece = arr[1];
 		if(endPiece != null){	// 如果存在吃子行为
-			endPiece.setAlive(true);	// 被吃掉的棋子设置为在战斗
+			endPiece.setFight(true);	// 被吃掉的棋子设置为在战斗
 			endPiece.setCurrPosition(endPosition, true);
 		} else {
 			endPosition.setPiece(null);

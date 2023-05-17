@@ -2,7 +2,7 @@ package com.lkn.chess;
 
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.ChessWalkBean;
-import com.lkn.chess.bean.PlayerRole;
+import com.lkn.chess.bean.Role;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,13 +19,13 @@ import java.util.Set;
  * @author LiKangNing
  *
  */
-public class Configure {
+public class Conf {
 	private static File chessFile = new File(System.getProperty("user.dir") + "/ChessSourceFile.txt");	// 棋谱文件
 	private static final boolean loadChessFile = false;	// 是否加载棋谱
-	private static Integer thinkingDepth = 3;	// 考虑深度
-	private static PlayerRole computerRole = PlayerRole.DEFENSIVE_POSITION;	// 电脑的默认角色为后手
-	private final static int GAME_PLAY_MAX_VAL = 100000;
-	private final static int GAME_PLAY_MIN_VAL = -100000;
+	public static Integer THINK_DEPTH = 5;	// 考虑深度
+	private static Role computerRole = Role.BLACK;	// 电脑的默认角色为后手
+	public final static int GAME_PLAY_MAX_VAL = 100000;
+	public final static int GAME_PLAY_MIN_VAL = -GAME_PLAY_MAX_VAL;
 	private static Set<String> redWinSet = new HashSet<String>();
 	private static Set<String> blackWinSet = new HashSet<String>();
 	private static Set<String> peaceSet = new HashSet<String>();
@@ -79,6 +79,7 @@ public class Configure {
 					if(num >= lineNum){
 						break;
 					}
+					System.out.println(num++);
 					if(line.endsWith("1")){	// 红胜
 						operateChessLaw(line, "1", board);	// 解析棋谱
 						redWinSet.add(line);
@@ -117,6 +118,9 @@ public class Configure {
 		{  a,  b,  c,  d,  e,  f,  g,  h,  i}
 	 * 
 	 * */
+	
+	
+	
 	public static Map<String, Character> getPieceNumberAndFlagMap() {
 		return pieceNumberAndFlagMap;
 	}
@@ -135,6 +139,7 @@ public class Configure {
 			if(lawArr[i] == null || lawArr[i].length() != 4){
 				break;
 			}
+//			System.out.println("CCCCCCCCCCCCCC: " + flag + " : " + lawArr[i]);
 			putSingleElementToMap(currPiecesStr, lawArr[i], flag, i);
 			ChessWalkBean walkBean = ReadOpeningChess.transfLawToWalkBean(lawArr[i], board);
 			if(walkBean == null){	// 如果当前棋谱记载不正确，那么将忽视该棋谱
@@ -197,20 +202,16 @@ public class Configure {
 		return chessFile;
 	}
 
-	public static Integer getThinkingDepth() {
-		return thinkingDepth;
+	public static Integer getThinkDepth() {
+		return THINK_DEPTH;
 	}
 
-	public static void setThinkingDepth(Integer thinkingDepth) {
-		Configure.thinkingDepth = thinkingDepth;
-	}
-
-	public static PlayerRole getComputerRole() {
+	public static Role getComputerRole() {
 		return computerRole;
 	}
 
-	public static void setComputerRole(PlayerRole computerRole) {
-		Configure.computerRole = computerRole;
+	public static void setComputerRole(Role computerRole) {
+		Conf.computerRole = computerRole;
 	}
 
 	public static int getGamePlayMaxVal() {
@@ -226,7 +227,7 @@ public class Configure {
 	}
 
 	public static void setRedNextStepMap(Map<String, Set<String>> redNextStepMap) {
-		Configure.redNextStepMap = redNextStepMap;
+		Conf.redNextStepMap = redNextStepMap;
 	}
 
 	public static Map<String, Set<String>> getBlackNextStepMap() {
@@ -234,7 +235,7 @@ public class Configure {
 	}
 
 	public static void setBlackNextStepMap(Map<String, Set<String>> blackNextStepMap) {
-		Configure.blackNextStepMap = blackNextStepMap;
+		Conf.blackNextStepMap = blackNextStepMap;
 	}
 	
 	

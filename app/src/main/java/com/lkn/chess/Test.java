@@ -1,62 +1,38 @@
 package com.lkn.chess;
 
 import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.ChessWalkBean;
-import com.lkn.chess.bean.Position;
 
-import java.util.Map;
 import java.util.Scanner;
 
 public class Test {
-	private ChessWalkBean walkBean = new ChessWalkBean();
-	
 	
 	public static void main(String[] args) {
-		System.out.println(Configure.getBlackWinSet().size());
 		new Test().personWalk();
 	}
-	
+
 	private void personWalk() {
 		ChessBoard board = new ChessBoard();
 		board.init();
-		
-		GamePlay play = new GamePlay();
+
+		GamePlayHigh play = new GamePlayHigh();
 		Scanner sc = new Scanner(System.in);
-		while(true){
-			board.show();
+		while (true) {
+			board.print();
 			System.out.println("请输入：");
 			String line = sc.nextLine();
 			String[] split = line.split(" ");
-			personWalk(board, split[0], split[1]);
+			if (split.length != 2) {
+				System.out.println("输入有误");
+				continue;
+			}
+			personWalk(board, Integer.parseInt(split[0]), Integer.parseInt(split[1]));
 			play.computerWalk(board);
 		}
 	}
 	
-	private void personWalk(ChessBoard board, String beginStr, String endStr) {
-		Map<String, Position> map = board.getPositionMap();
-		Position begin = map.get(beginStr);
-		Position end = map.get(endStr);
-		walkBean.walkActual(begin, end, board);
-		board.show();
-	}
-	
-	/**
-	 * 低效率走法
-	 */
-	private void personWalkLow() {
-		ChessBoard board = new ChessBoard();
-		board.init();
-		
-		GamePlayLow play = new GamePlayLow();
-		Scanner sc = new Scanner(System.in);
-		while(true){
-			board.show();
-			System.out.println("请输入：");
-			String line = sc.nextLine();
-			String[] split = line.split(" ");
-			personWalk(board, split[0], split[1]);
-			play.computerWalk(board);
-		}
+	private void personWalk(ChessBoard board, int beginPos, int endPos) {
+		board.walk(beginPos, endPos);
+		board.print();
 	}
 
 }

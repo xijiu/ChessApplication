@@ -3,6 +3,7 @@ package com.example.chessapplication;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.res.AssetManager;
 import android.graphics.Point;
 import android.os.PowerManager;
 import android.view.Display;
@@ -14,6 +15,11 @@ import android.os.Bundle;
 import com.lkn.chess.android.GameView;
 import com.lkn.chess.android.GlobalData;
 import com.lkn.chess.bean.ChessBoard;
+import com.lkn.chess.manual.Manual;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 public class MainActivity extends AppCompatActivity {
     private PowerManager powerManager = null;
@@ -22,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("InvalidWakeLockTag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        readManual();
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         this.powerManager = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
@@ -36,6 +43,22 @@ public class MainActivity extends AppCompatActivity {
         GlobalData.setWidth(size.x);
         View vw = new GameView(this, board);
         setContentView(vw);
+    }
+
+    private void readManual() {
+        try {
+            AssetManager assets = this.getAssets();
+            InputStream inputStream = assets.open("manual.chess");
+            int size = inputStream.available();
+            byte[] arr = new byte[size];
+            int read = inputStream.read(arr);
+            Manual.byteBuffer = ByteBuffer.wrap(arr);
+            Manual.byteBuffer.position(arr.length);
+            System.out.println("already load manual, size is :::: " + read);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @SuppressLint("ResourceType")

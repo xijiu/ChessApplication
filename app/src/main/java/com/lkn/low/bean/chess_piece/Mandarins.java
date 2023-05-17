@@ -1,11 +1,9 @@
-package com.lkn.chess.bean.chess_piece;
+package com.lkn.low.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
-import com.lkn.chess.ChessTools;
-import com.lkn.chess.PubTools;
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
+import com.lkn.low.PubTools;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,24 +12,17 @@ import java.util.Map;
  * 士
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
-public class Mandarins extends AbstractChessPiece {
-	public static final int RED_NUM = 4;
-	public static final int BLACK_NUM = 13;
+public class Mandarins extends AbstractChessPiece{
 
-	public Mandarins(Role role) {
-		this(null, role);
-	}
-
-	public Mandarins(String id, Role role) {
-		super(id, role);
+	public Mandarins(String id, PlayerRole PLAYER_ROLE) {
+		super(id, PLAYER_ROLE);
 		setValues();
 		this.setFightDefaultVal(120);
-		if(role == Role.RED){	// 先手
+		if(PLAYER_ROLE == PlayerRole.ON_THE_OFFENSIVE){	// 先手
 			this.setName("仕");
 		}else {
 			this.setName("士");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
 	}
 	
 	
@@ -56,84 +47,6 @@ public class Mandarins extends AbstractChessPiece {
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
 	}
 
-	@Override
-	public byte type() {
-		return (byte) (isRed() ? 4 : 11);
-	}
-
-	@Override
-	public int valuation(ChessBoard board, int position) {
-		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
-		int x = ChessTools.fetchX(position);
-		int y = ChessTools.fetchY(position);
-		return 100 + arr[x][y];
-	}
-
-	@Override
-	public int walkAsManual(ChessBoard board, int startPos, char cmd1, char cmd2) {
-		int x = ChessTools.fetchX(startPos);
-		int y = ChessTools.fetchY(startPos);
-		int targetY = ChessTools.transLineToY(cmd2, this.isRed() ? Role.RED : Role.BLACK);
-		if (cmd1 == '进') {
-			if (this.isRed()) {
-				x += 1;
-			} else {
-				x -= 1;
-			}
-		} else if (cmd1 == '退') {
-			if (this.isRed()) {
-				x -= 1;
-			} else {
-				x += 1;
-			}
-		} else {
-			throw new RuntimeException();
-		}
-		return ChessTools.toPosition(x, targetY);
-	}
-
-	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
-		reachableNum = 0;
-		int currX = ChessTools.fetchX(currPosition);
-		int currY = ChessTools.fetchY(currPosition);
-
-		findReachablePositions(currX, currY, board.getAllPiece());
-		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
-	}
-
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
-		if (isRed()) {
-			if (currX == 1 && currY == 4) {
-				tryReach(currX - 1, currY - 1, allPiece);
-				tryReach(currX - 1, currY + 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-			} else {
-				tryReach(1, 4, allPiece);
-			}
-		} else {
-			if (currX == 8 && currY == 4) {
-				tryReach(currX - 1, currY - 1, allPiece);
-				tryReach(currX - 1, currY + 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-			} else {
-				tryReach(8, 4, allPiece);
-			}
-		}
-	}
-
-	private void tryReach(int x, int y, Map<Integer, AbstractChessPiece> allPiece) {
-		AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, y));
-		if (piece == null || isEnemy(this, piece)) {
-			recordReachablePosition(ChessTools.toPosition(x, y));
-		}
-	}
-
 	/**
 	 * 士只有5个点可以走
 	 * 1、如果当前位置是中心位置，那么有4个位置可走
@@ -148,13 +61,13 @@ public class Mandarins extends AbstractChessPiece {
 		Position p3 = null;
 		Position p4 = null;
 		Position center = null;
-		if(this.getPLAYER_ROLE().equals(Role.RED)){	// 先手
+		if(this.getPLAYER_ROLE().equals(PlayerRole.ON_THE_OFFENSIVE)){	// 先手
 			p1 = allMap.get(ChessTools.getPositionID(3, 0));
 			p2 = allMap.get(ChessTools.getPositionID(5, 0));
 			p3 = allMap.get(ChessTools.getPositionID(3, 2));
 			p4 = allMap.get(ChessTools.getPositionID(5, 2));
 			center = allMap.get(ChessTools.getPositionID(4, 1));
-		} else if(this.getPLAYER_ROLE().equals(Role.BLACK)){	// 后手
+		} else if(this.getPLAYER_ROLE().equals(PlayerRole.DEFENSIVE_POSITION)){	// 后手
 			p1 = allMap.get(ChessTools.getPositionID(3, 9));
 			p2 = allMap.get(ChessTools.getPositionID(5, 9));
 			p3 = allMap.get(ChessTools.getPositionID(3, 7));

@@ -1,4 +1,4 @@
-package com.lkn.chess;
+package com.lkn.low;
 
 import java.util.Set;
 
@@ -89,24 +89,23 @@ public class PubTools {
 		}
 		return returnBoolean;
 	}
-
-
-	public static int compress(int begin, int end) {
-		return (begin << 8) + end;
-	}
-
-	public static int uncompressBegin(int position) {
-		return position >> 8;
-	}
-
-	public static int uncompressEnd(int position) {
-		return position << 24 >> 24;
+	
+	public static String getChooseStr(){
+		String str = "未知";
+		if(Configure.getThinkingDepth() == 3){
+			str = "小白";
+		} else if(Configure.getThinkingDepth() == 4){
+			str = "新手";
+		} else if(Configure.getThinkingDepth() == 5){
+			str = "入门";
+		}
+		return str;
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(compress(90, 12));
-		System.out.println(uncompressBegin(23052));
-		System.out.println(uncompressEnd(23052));
+		for (int i = 0; i < 10; i++) {
+			System.out.println(PubTools.getRandom(4, 5));
+		}
 	}
 	
 }

@@ -1,4 +1,4 @@
-package com.lkn.chess.bean;
+package com.lkn.low.bean;
 /**
  * 象棋角色，分为先手跟后手
  * @author:likn1	Jan 5, 2016  11:29:54 AM

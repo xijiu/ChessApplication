@@ -1,12 +1,13 @@
-package com.lkn.chess;
+package com.lkn.low;
 
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.ChessWalkBean;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
-import com.lkn.chess.bean.RoundTurn;
-import com.lkn.chess.bean.WalkTrackBean;
-import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.chess.android.GameView;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.ChessWalkBean;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
+import com.lkn.low.bean.RoundTurn;
+import com.lkn.low.bean.WalkTrackBean;
+import com.lkn.low.bean.chess_piece.AbstractChessPiece;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -21,32 +22,47 @@ import java.util.Set;
 public class GamePlay {
 	private Map<ChessWalkBean, Integer> bestResultMap = new HashMap<ChessWalkBean, Integer>();
 	private Map<Integer, WalkTrackBean> bestTrackMap = new HashMap<Integer, WalkTrackBean>();	// 最佳行走轨迹
-	private Map<Integer, Map<String, ChessWalkBean>> transfMap = new HashMap<Integer, Map<String, ChessWalkBean>>();	// 置换表算法---
+	private Map<Integer, Map<String, ChessWalkBean>> transfMap = new HashMap<Integer, Map<String,ChessWalkBean>>();	// 置换表算法---
 	private ChessWalkBean walkBean = new ChessWalkBean();
 	private int number = 0;	// 计数器，用来计算电脑思考的情况数目
+	private GameView gameView;
+	
+	public GamePlay(){
+	}
+	
+	public GamePlay(GameView gameView){
+		this.gameView = gameView;
+	}
+	
 	
 	/**
 	 * 电脑考虑后走棋
 	 * 1、电脑考虑
 	 * 2、电脑走棋
-	 * @param chessBoard
+	 * @param board
 	 */
-	public void computerWalk(ChessBoard chessBoard){
+	public Position[] computerWalk(ChessBoard chessBoard){
 		long begin = System.currentTimeMillis();
 		computerThink(chessBoard);	// 电脑首先考虑
 		walkBean.walkActual(bestTrackMap.get(1).getBegin(), bestTrackMap.get(1).getEnd(), chessBoard);	// 电脑走棋
+
+		Position[] positions = new Position[2];
+		positions[0] = bestTrackMap.get(1).getBegin();
+		positions[1] = bestTrackMap.get(1).getEnd();
+
 		long end = System.currentTimeMillis();
 		System.out.println("电脑思考耗时：   " + ((end - begin)/1000) + "   秒。 考虑情况：   " + number + "   种");
 		System.out.println("当前棋谱：" + chessBoard.getChessRecordesBuffer().toString());
 		number = 0;
 		bestTrackMap.clear();
+		return positions;
 	}
 
 	/**
 	 * 电脑考虑
 	 * 首先在棋谱中查找是否有可走的棋谱
 	 * 如果找不到可走棋谱，那么再进行独立思考
-	 * @param chessBoard
+	 * @param board
 	 */
 	public void computerThink(ChessBoard chessBoard){
 		bestResultMap.clear();
@@ -55,7 +71,7 @@ public class GamePlay {
 		if(lawWalkBean != null){	// 棋谱中有对应记录
 			bestTrackMap.put(1, new WalkTrackBean(lawWalkBean.getBeginPosition(), lawWalkBean.getEndPosition()));
 		} else {	// 进行独立思考
-			iterationThink(chessBoard, Conf.getComputerRole());
+			iterationThink(chessBoard, Configure.getComputerRole());
 		}
 	}
 	
@@ -64,12 +80,12 @@ public class GamePlay {
 	 * @param currWalkRole
 	 * @return
 	 */
-	private int initVal(Role currWalkRole) {
+	private int initVal(PlayerRole currWalkRole) {
 		int returnVal = 0;
-		if(currWalkRole == Conf.getComputerRole()){
-			returnVal = Conf.getGamePlayMinVal();
+		if(currWalkRole == Configure.getComputerRole()){
+			returnVal = Configure.getGamePlayMinVal();
 		} else {
-			returnVal = Conf.getGamePlayMaxVal();
+			returnVal = Configure.getGamePlayMaxVal();
 		}
 		return returnVal;
 	}
@@ -82,11 +98,11 @@ public class GamePlay {
 	 * @param board
 	 * @param currWalkRole
 	 */
-	private void iterationThink(ChessBoard board, Role currWalkRole) {
-		for (int i = 1; i <= Conf.getThinkDepth(); i++) {
+	private void iterationThink(ChessBoard board, PlayerRole currWalkRole){
+		for (int i = 1; i <= Configure.getThinkingDepth(); i++) {
 			tempThinkDepth = i;
 			transfMap.clear();	// 每次进行迭代深化的时候都清空一下置换表中的信息
-			iterationThink(board, currWalkRole, 1, Conf.getGamePlayMaxVal());
+			iterationThink(board, currWalkRole, 1, Configure.getGamePlayMaxVal());
 		}
 		int a = 0;
 		Set<Integer> keySet = transfMap.keySet();
@@ -94,7 +110,6 @@ public class GamePlay {
 			Map<String, ChessWalkBean> map = transfMap.get(integer);
 			a = a + map.size();
 		}
-		System.out.println("置换表长度： " + a);
 	}
 	
 	/**
@@ -105,61 +120,61 @@ public class GamePlay {
 	 * @param lastStepVal
 	 * @return
 	 */
-	private Integer iterationThink(ChessBoard board, Role currWalkRole, int depth, int lastStepVal) {
-		int maxOrMinVal = initVal(currWalkRole);    // 初始化最大最小值
-		ChessWalkBean transfWalkBean = findTransfMap(board, depth);    // 查找置换表，如果发现可走的路线，那么直接进行行走
+	private Integer iterationThink(ChessBoard board, PlayerRole currWalkRole, int depth, int lastStepVal){
+		int maxOrMinVal = initVal(currWalkRole);	// 初始化最大最小值
+		ChessWalkBean transfWalkBean = findTransfMap(board, depth);	// 查找置换表，如果发现可走的路线，那么直接进行行走
 //		transfWalkBean = null;
-		if (transfWalkBean != null) {    // 如果在置换表中已经找到可直接行走的方式，那么不需要再向下递归
-			AbstractChessPiece[] walkArr = walkBean.walk(transfWalkBean.getBeginPosition(), transfWalkBean.getEndPosition());    // 走一步
-			maxOrMinVal = board.getHigherFightValByRole(Conf.getComputerRole());
-			walkBean.walkBack(transfWalkBean.getBeginPosition(), transfWalkBean.getEndPosition(), walkArr);    // 回走
+		if(transfWalkBean != null){	// 如果在置换表中已经找到可直接行走的方式，那么不需要再向下递归
+			AbstractChessPiece[] walkArr = walkBean.walk(transfWalkBean.getBeginPosition(), transfWalkBean.getEndPosition());	// 走一步
+			maxOrMinVal = board.getHigherFightValByRole(Configure.getComputerRole());
+			walkBean.walkBack(transfWalkBean.getBeginPosition(), transfWalkBean.getEndPosition(), walkArr);	// 回走
 		} else {
-			Set<AbstractChessPiece> set = board.getPiecesByPlayRole(currWalkRole);    // 获取当前角色可走的棋子集合
-			WalkTrackBean trackBean = bestTrackMap.get(depth);    // 获取当前深度下的最优着法
-			Set<AbstractChessPiece> sortedSet = getSortedSet(set, trackBean);    // 获取已经排序好的set
+			Set<AbstractChessPiece> set = board.getPiecesByPlayRole(currWalkRole);	// 获取当前角色可走的棋子集合
+			WalkTrackBean trackBean = bestTrackMap.get(depth);	// 获取当前深度下的最优着法
+			Set<AbstractChessPiece> sortedSet = getSortedSet(set, trackBean);	// 获取已经排序好的set
 			Position currBestBeginPosition = null;
 			Position currBestEndPosition = null;
-			for (AbstractChessPiece piece : sortedSet) {    // 遍历每个棋子
-				Position beginPosition = piece.getCurrPosition();    // 开始的位置
-				Map<String, Position> sortedMap = getSortedMap(beginPosition, piece.getReachablePositions(board), trackBean);    // 对可走的位置进行排序
+			for (AbstractChessPiece piece : sortedSet) {	// 遍历每个棋子
+				Position beginPosition = piece.getCurrPosition();	// 开始的位置
+				Map<String, Position> sortedMap = getSortedMap(beginPosition, piece.getReachablePositions(board), trackBean);	// 对可走的位置进行排序
 				for (Position position : sortedMap.values()) {
-					if (isRepeatChess(beginPosition, position, depth, board)) {    // 检查是否存在常将的情况
+					if(isRepeatChess(beginPosition, position, depth, board)){	// 检查是否存在常将的情况
 						continue;
 					}
 					int val = 0;
-					AbstractChessPiece[] walkArr = walkBean.walk(beginPosition, position);    // 走一步
-					if (depth == tempThinkDepth || board.isKingEaten()) {    // 如果已经到达最大深度，或者对方的“将”已被吃掉
-						val = board.getHigherFightValByRole(Conf.getComputerRole());
+					AbstractChessPiece[] walkArr = walkBean.walk(beginPosition, position);	// 走一步
+					if(depth == tempThinkDepth || board.isKingEaten()){	// 如果已经到达最大深度，或者对方的“将”已被吃掉
+						val = board.getHigherFightValByRole(Configure.getComputerRole());
 						++number;
 					} else {
-						val = iterationThink(board, Role.nextRole(currWalkRole), depth + 1, maxOrMinVal);
+						val = iterationThink(board, PlayerRole.nextRole(currWalkRole), depth + 1, maxOrMinVal);
 					}
-					walkBean.walkBack(beginPosition, position, walkArr);    // 回走
-
-					if (currWalkRole.equals(Conf.getComputerRole())) {
-						if (val > maxOrMinVal) {
+					walkBean.walkBack(beginPosition, position, walkArr);	// 回走
+					
+					if(currWalkRole.equals(Configure.getComputerRole())){
+						if(val > maxOrMinVal){
 							maxOrMinVal = val;
 							currBestBeginPosition = beginPosition;
 							currBestEndPosition = position;
 							bestTrackMap.put(depth, new WalkTrackBean(beginPosition, position));
 						}
-						if (val > lastStepVal) {    // 发生剪枝行为----β剪枝
-							return Conf.getGamePlayMaxVal();
+						if(val > lastStepVal){	// 发生剪枝行为----β剪枝
+							return Configure.getGamePlayMaxVal();
 						}
 					} else {
-						if (val < maxOrMinVal) {
+						if(val < maxOrMinVal){
 							maxOrMinVal = val;
 							currBestBeginPosition = beginPosition;
 							currBestEndPosition = position;
 							bestTrackMap.put(depth, new WalkTrackBean(beginPosition, position));
 						}
-						if (val < lastStepVal) {    // 发生剪枝行为----α剪枝
-							return Conf.getGamePlayMinVal();
+						if(val < lastStepVal){	// 发生剪枝行为----α剪枝
+							return Configure.getGamePlayMinVal();
 						}
 					}
 				}
 			}
-			saveToTransfMap(board, currBestBeginPosition, currBestEndPosition, depth);    // 向置换表中存储
+			saveToTransfMap(board, currBestBeginPosition, currBestEndPosition, depth);	// 向置换表中存储
 		}
 		return maxOrMinVal;
 	}
@@ -171,31 +186,32 @@ public class GamePlay {
 	 * @param endPosition
 	 * @param depth
 	 * @param board 
+	 * @param currWalkRole 
 	 * @return
 	 */
 	private boolean isRepeatChess(Position beginPosition, Position endPosition, int depth, ChessBoard board) {
-		boolean exist = false;
+		boolean repeat = false;
 		if(depth == 1){
 			List<RoundTurn> list = board.getChessRecordesList();
-			if(list.size() >= 3){
-				if(Conf.getComputerRole() == Role.BLACK){
-					if(list.get(list.size() - 3).isSame(list.get(list.size() - 2))){
-						if(list.get(list.size() - 1).isSameRed(list.get(list.size() - 2))){
-							if(list.get(list.size() - 2).isSameBlack(beginPosition, endPosition)){
-								exist = true;
+			if(list.size() >= 5){
+				if(Configure.getComputerRole() == PlayerRole.DEFENSIVE_POSITION){
+					if(list.get(list.size() - 5).isSame(list.get(list.size() - 3)) && list.get(list.size() - 4).isSame(list.get(list.size() - 2))){
+						if(list.get(list.size() - 1).isSameRed(list.get(list.size() - 3))){
+							if(list.get(list.size() - 3).isSameBlack(beginPosition, endPosition)){
+								repeat = true;
 							}
 						}
 					}
 				} else {
-					if(list.get(list.size() - 2).isSame(list.get(list.size() - 1))){
-						if(list.get(list.size() - 1).isSameRed(beginPosition, endPosition)){
-							exist = true;
+					if(list.get(list.size() - 4).isSame(list.get(list.size() - 2)) && list.get(list.size() - 3).isSame(list.get(list.size() - 1))){
+						if(list.get(list.size() - 2).isSameRed(beginPosition, endPosition)){
+							repeat = true;
 						}
 					}
 				}
 			}
 		}
-		return exist;
+		return repeat;
 	}
 
 	private ChessWalkBean findTransfMap(ChessBoard board, int depth) {
@@ -223,7 +239,7 @@ public class GamePlay {
 	 * @param depth
 	 */
 	private void saveToTransfMap(ChessBoard board, Position beginPosition, Position endPosition, int depth) {
-		Integer thinkingMaxDepth = Conf.getThinkDepth();
+		Integer thinkingMaxDepth = Configure.getThinkingDepth();
 		if(thinkingMaxDepth - depth <= 3 || beginPosition == null || endPosition == null){	// 思考深度小于3的置换表不予保留
 			return ;
 		}

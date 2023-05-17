@@ -1,10 +1,11 @@
-package com.lkn.chess;
+package com.lkn.low;
 
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.ChessWalkBean;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
-import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.ChessWalkBean;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
+import com.lkn.low.bean.chess_piece.AbstractChessPiece;
+import com.lkn.low.bean.chess_piece.ChessTools;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,12 +28,12 @@ public class ReadOpeningChess {
 		String chessLaw = null;
 		Set<String> resultSet = new HashSet<String>();
 		Set<String> set = null;
-		if(Conf.getComputerRole() == Role.RED){
-			set = Conf.getRedWinSet();
+		if(Configure.getComputerRole() == PlayerRole.ON_THE_OFFENSIVE){
+			set = Configure.getRedWinSet();
 		} else {
-			set = Conf.getBlackWinSet();
+			set = Configure.getBlackWinSet();
 		}
-		set.addAll(Conf.getPeaceSet());
+		set.addAll(Configure.getPeaceSet());
 		for (String law : set) {
 			if(law.startsWith(currChessLaw)){
 				chessLaw = law.substring(currChessLaw.length(), law.length());
@@ -63,7 +64,7 @@ public class ReadOpeningChess {
 	 */
 	public static ChessWalkBean transfLawToWalkBean(String nextLaw, ChessBoard board) {
 		ChessWalkBean walkBean = null;
-		Role ROLE = ChessTools.judgeLawRoler(nextLaw);
+		PlayerRole ROLE = ChessTools.judgeLawRoler(nextLaw);
 		if(nextLaw != null && nextLaw.length() == 4){
 			char[] arr = nextLaw.toCharArray();
 			Set<AbstractChessPiece> set = getWalkPiece(arr, board, ROLE);
@@ -93,10 +94,10 @@ public class ReadOpeningChess {
 	public static ChessWalkBean transfLawToWalkBean(ChessBoard board) {
 		ChessWalkBean walkBean = null;
 		Map<String, Set<String>> map = null;
-		if(Conf.getComputerRole() == Role.RED){	// 电脑先手
-			map = Conf.getRedNextStepMap();
+		if(Configure.getComputerRole() == PlayerRole.ON_THE_OFFENSIVE){	// 电脑先手
+			map = Configure.getRedNextStepMap();
 		} else {	// 电脑后手
-			map = Conf.getBlackNextStepMap();
+			map = Configure.getBlackNextStepMap();
 		}
 		System.out.println(board.currPiecesStr());
 		Set<String> set = map.get(board.currPiecesStr());
@@ -104,7 +105,7 @@ public class ReadOpeningChess {
 			String nextLaw = PubTools.getRandomEleFromSet(set);
 			if(nextLaw != null && nextLaw.length() == 4){
 				char[] arr = nextLaw.toCharArray();
-				Set<AbstractChessPiece> resultSet = getWalkPiece(arr, board, Conf.getComputerRole());
+				Set<AbstractChessPiece> resultSet = getWalkPiece(arr, board, Configure.getComputerRole());
 				for (AbstractChessPiece piece : resultSet) {
 					Position endPosition = piece.walkRecorde(board, String.valueOf(arr[2]), String.valueOf(arr[3]));
 					if(endPosition == null){
@@ -125,7 +126,7 @@ public class ReadOpeningChess {
 	 * @param ROLE 
 	 * @return
 	 */
-	private static Set<AbstractChessPiece> getWalkPiece(char[] arr, ChessBoard board, Role ROLE) {
+	private static Set<AbstractChessPiece> getWalkPiece(char[] arr, ChessBoard board, PlayerRole ROLE) {
 		Set<AbstractChessPiece> returnSet = new HashSet<AbstractChessPiece>();
 		AbstractChessPiece returnPiece = null;
 		if(arr[0] == '前' || arr[0] == '后'){
@@ -134,9 +135,9 @@ public class ReadOpeningChess {
 			AbstractChessPiece piece1 = PubTools.getSetIndexEle(set, 0);
 			AbstractChessPiece piece2 = PubTools.getSetIndexEle(set, 1);
 			if(arr[0] == '前'){
-				returnPiece = ROLE == Role.RED ? (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece2 : piece1) : (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece1 : piece2);
+				returnPiece = ROLE == PlayerRole.ON_THE_OFFENSIVE ? (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece2 : piece1) : (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece1 : piece2);
 			}else {
-				returnPiece = ROLE == Role.RED ? (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece1 : piece2) : (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece2 : piece1);
+				returnPiece = ROLE == PlayerRole.ON_THE_OFFENSIVE ? (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece1 : piece2) : (piece2.getCurrPosition().getY() > piece1.getCurrPosition().getY() ? piece2 : piece1);
 			}
 			returnSet.add(returnPiece);
 		}else {

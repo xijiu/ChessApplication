@@ -1,10 +1,10 @@
-package com.lkn.chess;
+package com.lkn.low;
 
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.ChessWalkBean;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
-import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.ChessWalkBean;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
+import com.lkn.low.bean.chess_piece.AbstractChessPiece;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class GamePlayLow {
 	 */
 	public void computerThink(ChessBoard chessBoard){
 		bestResultMap.clear();
-		walkThink(chessBoard, Conf.getComputerRole(), 1, Conf.getGamePlayMaxVal());
+		walkThink(chessBoard, Configure.getComputerRole(), 1, Configure.getGamePlayMaxVal());
 	}
 	
 	/**
@@ -61,7 +61,7 @@ public class GamePlayLow {
 	private Position bestEndPosition = null;
 	private ChessWalkBean walkBean = new ChessWalkBean();
 	private int number = 0;
-	private Integer walkThink(ChessBoard board, Role currWalkRole, int depth, int lastStepVal){
+	private Integer walkThink(ChessBoard board, PlayerRole currWalkRole, int depth, int lastStepVal){
 		Set<AbstractChessPiece> set = board.getPiecesByPlayRole(currWalkRole);	// 获取当前角色可走的棋子集合
 		int maxOrMinVal = initVal(currWalkRole);
 		for (AbstractChessPiece piece : set) {	// 遍历每个棋子
@@ -70,15 +70,15 @@ public class GamePlayLow {
 			for (Position position : reachableMap.values()) {
 				int val = 0;
 				AbstractChessPiece[] walkArr = walkBean.walk(beginPosition, position);	// 走一步
-				if(depth == Conf.getThinkDepth()){	// 如果已经到达最大深度
-					val = board.getHigherFightValByRole(Conf.getComputerRole());
+				if(depth == Configure.getThinkingDepth()){	// 如果已经到达最大深度
+					val = board.getHigherFightValByRole(Configure.getComputerRole());
 					++number;
 				} else {
-					val = walkThink(board, Role.nextRole(currWalkRole), depth + 1, maxOrMinVal);
+					val = walkThink(board, PlayerRole.nextRole(currWalkRole), depth + 1, maxOrMinVal);
 				}
 				walkBean.walkBack(beginPosition, position, walkArr);	// 回走
 				
-				if(currWalkRole.equals(Conf.getComputerRole())){
+				if(currWalkRole.equals(Configure.getComputerRole())){
 					if(depth == 1 && val > maxOrMinVal){
 						System.out.println(val);
 						bestBeginPosition = beginPosition;
@@ -88,12 +88,12 @@ public class GamePlayLow {
 						maxOrMinVal = val;
 					}
 					if(val > lastStepVal){	// β剪枝
-						return Conf.getGamePlayMaxVal();
+						return Configure.getGamePlayMaxVal();
 					}
 				} else {
 					maxOrMinVal = val < maxOrMinVal ? val : maxOrMinVal;
 					if(val < lastStepVal){	// α剪枝
-						return Conf.getGamePlayMinVal();
+						return Configure.getGamePlayMinVal();
 					}
 				}
 			}
@@ -101,12 +101,12 @@ public class GamePlayLow {
 		return maxOrMinVal;
 	}
 
-	private int initVal(Role currWalkRole) {
+	private int initVal(PlayerRole currWalkRole) {
 		int returnVal = 0;
-		if(currWalkRole == Conf.getComputerRole()){
-			returnVal = Conf.getGamePlayMinVal();
+		if(currWalkRole == Configure.getComputerRole()){
+			returnVal = Configure.getGamePlayMinVal();
 		} else {
-			returnVal = Conf.getGamePlayMaxVal();
+			returnVal = Configure.getGamePlayMaxVal();
 		}
 		return returnVal;
 	}

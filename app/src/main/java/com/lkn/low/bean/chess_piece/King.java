@@ -1,11 +1,9 @@
-package com.lkn.chess.bean.chess_piece;
+package com.lkn.low.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
-import com.lkn.chess.ChessTools;
-import com.lkn.chess.PubTools;
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
+import com.lkn.low.PubTools;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,25 +15,17 @@ import java.util.Set;
  * 将
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
-public class King extends AbstractChessPiece {
-	public static final int RED_NUM = 5;
-	public static final int BLACK_NUM = 14;
+public class King extends AbstractChessPiece{
 
-	public King(Role role) {
-		this(null, role);
-	}
-
-	public King(String id, Role role) {
-		super(id, role);
+	public King(String id, PlayerRole PLAYER_ROLE) {
+		super(id, PLAYER_ROLE);
 		setValues();
 		this.setFightDefaultVal(1000000);
-		if(role == Role.RED){	// 先手
+		if(PLAYER_ROLE == PlayerRole.ON_THE_OFFENSIVE){	// 先手
 			this.setName("帅");
 		}else {
 			this.setName("将");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
-
 	}
 	
 	/**
@@ -58,102 +48,6 @@ public class King extends AbstractChessPiece {
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
 	}
-
-	@Override
-	public byte type() {
-		return (byte) (isRed() ? 5 : 12);
-	}
-
-	@Override
-	public int valuation(ChessBoard board, int position) {
-		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
-		int x = ChessTools.fetchX(position);
-		int y = ChessTools.fetchY(position);
-		return 1000000 + arr[x][y];
-	}
-
-	@Override
-	public int walkAsManual(ChessBoard board, int startPos, char cmd1, char cmd2) {
-		int x = ChessTools.fetchX(startPos);
-		int y = ChessTools.fetchY(startPos);
-		int num = ChessTools.transToNum(cmd2);
-		if (cmd1 == '进') {
-			x = this.isRed() ? x + num : x - num;
-		} else if (cmd1 == '退') {
-			x = this.isRed() ? x - num : x + num;
-		} else if (cmd1 == '平') {
-			y = ChessTools.transLineToY(cmd2, this.getPLAYER_ROLE());
-		} else {
-			throw new RuntimeException();
-		}
-		return ChessTools.toPosition(x, y);
-	}
-
-	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
-		reachableNum = 0;
-		int currX = ChessTools.fetchX(currPosition);
-		int currY = ChessTools.fetchY(currPosition);
-
-		findReachablePositions(currX, currY, board.getAllPiece());
-		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
-	}
-
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
-		tryReach(currX - 1, currY, allPiece);
-		tryReach(currX + 1, currY, allPiece);
-		tryReach(currX, currY - 1, allPiece);
-		tryReach(currX, currY + 1, allPiece);
-
-		tryReachToEnemyKing(currX, currY, allPiece);
-	}
-
-	private void tryReachToEnemyKing(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
-		if (this.isRed()) {
-			for (int x = currX + 1; x < 10; x++) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, currY));
-				if (piece != null) {
-					if (piece.getName().equals("将")) {
-						recordReachablePosition(ChessTools.toPosition(x, currY));
-					}
-					return;
-				}
-			}
-		} else {
-			for (int x = currX - 1; x >= 0; x--) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, currY));
-				if (piece != null) {
-					if (piece.getName().equals("帅")) {
-						recordReachablePosition(ChessTools.toPosition(x, currY));
-					}
-					return;
-				}
-			}
-		}
-	}
-
-	private void tryReach(int x, int y, Map<Integer, AbstractChessPiece> allPiece) {
-		if (isInArea(x, y)) {
-			AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, y));
-			if (piece == null || isEnemy(this, piece)) {
-				recordReachablePosition(ChessTools.toPosition(x, y));
-			}
-
-		}
-	}
-
-	private boolean isInArea(int x, int y) {
-		if (this.isRed()) {
-			return x >= 0 && x <= 2 && y >= 3 && y <= 5;
-		} else {
-			return x >= 7 && x <= 9 && y >= 3 && y <= 5;
-		}
-	}
-
-
 	/**
 	 * 将的行走
 	 */
@@ -162,7 +56,7 @@ public class King extends AbstractChessPiece {
 		Map<String, Position> reachableMap = new HashMap<String, Position>();	// 最终结果，需要返回的对象
 		Map<String, Position> allMap = board.getPositionMap();
 		Map<String, Position> couldWalkMapAll = new HashMap<String, Position>();	// 能够走的位置的集合
-		if(this.getPLAYER_ROLE().equals(Role.RED)){	// 先手
+		if(this.getPLAYER_ROLE().equals(PlayerRole.ON_THE_OFFENSIVE)){	// 先手
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(3, 0)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(4, 0)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(5, 0)), couldWalkMapAll);
@@ -172,7 +66,7 @@ public class King extends AbstractChessPiece {
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(3, 2)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(4, 2)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(5, 2)), couldWalkMapAll);
-		}else if(this.getPLAYER_ROLE().equals(Role.BLACK)){	// 后手
+		}else if(this.getPLAYER_ROLE().equals(PlayerRole.DEFENSIVE_POSITION)){	// 后手
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(3, 7)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(4, 7)), couldWalkMapAll);
 			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(5, 7)), couldWalkMapAll);
@@ -216,30 +110,17 @@ public class King extends AbstractChessPiece {
 	 */
 	private void operateTwoKingMeeting(Map<String, Position> reachableMap, ChessBoard board) {
 		Set<String> notReachableSet = new HashSet<String>();
+		AbstractChessPiece redKing = PubTools.getSetIndexEle(ChessTools.getPieceByName(board, "帅", PlayerRole.ON_THE_OFFENSIVE), 0);
+		AbstractChessPiece blackKing = PubTools.getSetIndexEle(ChessTools.getPieceByName(board, "将", PlayerRole.DEFENSIVE_POSITION), 0);
 		AbstractChessPiece kingPiece = null;
-		if (this.getName().equals("将")) {
-			kingPiece = PubTools.getSetIndexEle(ChessTools.getPieceByName(board, "帅", Role.RED), 0);
+		if(this.getName().equals("将")){
+			kingPiece = redKing;
 		} else {
-			kingPiece = PubTools.getSetIndexEle(ChessTools.getPieceByName(board, "将", Role.BLACK), 0);
+			kingPiece = blackKing;
 		}
 		for (Position position : reachableMap.values()) {
-			System.out.println("position == null ? " + (position == null));
-			System.out.println("kingPiece == null ? " + (kingPiece == null));
-			if (position.getX().equals(kingPiece.getCurrPosition().getX())) {	// 如果在同一列中
-				Map<String, Position> map = ChessTools.getAllChess_Y(board.getPositionMap(), position);
-				boolean hasOtherPiece = false;
-				for (Position p : map.values()) {
-					if(p.isExistPiece() && p.getPiece().isAlive()){
-						AbstractChessPiece piece = p.getPiece();
-						if(piece.getName().equals("帅")){
-						} else if(piece.getName().equals("将")){
-						} else {
-							hasOtherPiece = true;
-							break;
-						}
-					}
-				}
-				if(!hasOtherPiece){	// 如果两个“将”中间没有其他棋子
+			if(position.getX().equals(kingPiece.getCurrPosition().getX())){	// 如果在同一列中
+				if(judgeTwoKingsMeeting(board, position, kingPiece.getCurrPosition())){
 					notReachableSet.add(position.getID());
 				}
 			}
@@ -247,6 +128,44 @@ public class King extends AbstractChessPiece {
 		for (String str : notReachableSet) {	// 将可能会导致两个“将”见面的情况删掉
 			reachableMap.remove(str);
 		}
+		
+		/**以下处理，如果两个将真的见面了，那么走棋方可以吃掉对方的将****************************************************/
+		boolean isMeet = judgeTwoKingsMeeting(board, redKing.getCurrPosition(), blackKing.getCurrPosition());	// 判断两个将是否见面
+		if(isMeet){
+			reachableMap.put(kingPiece.getCurrPosition().getID(), kingPiece.getCurrPosition());
+		}
+	}
+
+	/**
+	 * 判断两个将是否见面
+	 * @author:likn1	Feb 24, 2016  11:14:55 AM
+	 * @param board
+	 * @param position1
+	 * @param position2
+	 * @return
+	 */
+	private boolean judgeTwoKingsMeeting(ChessBoard board, Position position1, Position position2) {
+		boolean isMeet = true;
+		if(position1.getX().equals(position2.getX())){	// 首先需要在同一列中
+			int minY = position1.getY() > position2.getY() ? position2.getY() : position1.getY();
+			int maxY = position1.getY() > position2.getY() ? position1.getY() : position2.getY();
+			Map<String, Position> map = ChessTools.getAllChess_Y(board.getPositionMap(), position1);
+			for (Position position : map.values()) {
+				if(position.isExistPiece() && position.getPiece().isFight()){
+					AbstractChessPiece piece = position.getPiece();
+					if(!piece.getName().equals("帅") && !piece.getName().equals("将")){
+						Integer pieceY = piece.getCurrPosition().getY();
+						if(pieceY > minY && pieceY < maxY){
+							isMeet = false;
+						}
+					}
+				}
+			}
+		} else {	// 如果不在同一列
+			isMeet = false;
+		}
+		
+		return isMeet;
 	}
 
 	@Override

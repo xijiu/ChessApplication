@@ -1,6 +1,6 @@
-package com.lkn.chess.read_chess;
+package com.lkn.low.read_chess;
 
-import com.lkn.chess.Conf;
+import com.lkn.low.Configure;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -22,7 +22,7 @@ public class WriteChessFile {
 	}
 	
 	public void writeFileToSystem(Set<String> set) throws Exception {
-		PrintWriter pw = new PrintWriter(new FileWriter(Conf.getChessFile(), true));
+		PrintWriter pw = new PrintWriter(new FileWriter(Configure.getChessFile(), true));
 		int num = 0;
 		for (String lineInfo : set) {
 			if(lineInfo != null && !lineInfo.equals("") && !checkRepeat(lineInfo)){
@@ -35,7 +35,7 @@ public class WriteChessFile {
 	}
 
 	private void readSourceFile() throws Exception {
-		BufferedReader br = new BufferedReader(new FileReader(Conf.getChessFile()));
+		BufferedReader br = new BufferedReader(new FileReader(Configure.getChessFile()));
 		String line = null;
 		while((line = br.readLine()) != null){
 			System.out.println(" : " + line);

@@ -1,6 +1,6 @@
-package com.lkn.chess.bean;
+package com.lkn.low.bean;
 
-import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.low.bean.chess_piece.AbstractChessPiece;
 
 public class Position implements Cloneable {
 	private final String ID; // 位置的唯一编号
@@ -14,7 +14,7 @@ public class Position implements Cloneable {
 		this.y = y;
 		this.existPiece = existPiece;
 		this.piece = piece;
-		this.ID = String.valueOf(x) + y;
+		this.ID = new StringBuffer().append(x).append(y).toString();
 	}
 
 	public String getID() {

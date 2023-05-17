@@ -13,7 +13,7 @@
 //import android.view.View;
 //import android.view.WindowManager;
 //import com.lkn.chess.R;
-//import com.lkn.chess.bean.ChessBoard;
+//import com.lkn.low.bean.ChessBoard;
 //
 //public class MainActivity extends ActionBarActivity {
 //	private PowerManager powerManager = null;

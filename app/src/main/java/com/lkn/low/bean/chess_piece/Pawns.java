@@ -1,11 +1,9 @@
-package com.lkn.chess.bean.chess_piece;
+package com.lkn.low.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
-import com.lkn.chess.ChessTools;
-import com.lkn.chess.PubTools;
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
+import com.lkn.low.PubTools;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,24 +13,16 @@ import java.util.Map;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Pawns extends AbstractChessPiece {
-	public static final int RED_NUM = 7;
-	public static final int BLACK_NUM = 8;
-	public static final int BASE_VAL = 50;
-
-	public Pawns(Role role) {
-		this(null, role);
-	}
-
-	public Pawns(String id, Role role) {
-		super(id, role);
+	
+	public Pawns(String id, PlayerRole PLAYER_ROLE) {
+		super(id, PLAYER_ROLE);
 		setValues();
-		this.setFightDefaultVal(BASE_VAL);
-		if(role == Role.RED) {	// 先手
+		this.setFightDefaultVal(20);
+		if(PLAYER_ROLE == PlayerRole.ON_THE_OFFENSIVE){	// 先手
 			this.setName("兵");
 		}else {
 			this.setName("卒");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
 	}
 	
 	/**
@@ -46,85 +36,14 @@ public class Pawns extends AbstractChessPiece {
 				{ 14, 26, 42, 60, 80, 60, 42, 26, 14},
 				{ 10, 20, 30, 34, 40, 34, 30, 20, 10},
 				{  6, 12, 18, 18, 20, 18, 18, 12,  6},
-				{  6,  0,  8,  0, 10,  0,  8,  0,  6},
-				{  6,  0,  8,  0, 10,  0,  8,  0,  6},
+				{  2,  0,  8,  0,  8,  0,  8,  0,  2},
+				{  0,  0, -2,  0,  4,  0, -2,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
-	}
-
-	@Override
-	public byte type() {
-		return (byte) (isRed() ? 7 : 14);
-	}
-
-	@Override
-	public int valuation(ChessBoard board, int position) {
-		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
-		int x = ChessTools.fetchX(position);
-		int y = ChessTools.fetchY(position);
-		return (int) (BASE_VAL * 2.5) + arr[x][y];
-	}
-
-	@Override
-	public int walkAsManual(ChessBoard board, int startPos, char cmd1, char cmd2) {
-		int x = ChessTools.fetchX(startPos);
-		int y = ChessTools.fetchY(startPos);
-		int num = ChessTools.transToNum(cmd2);
-		if (cmd1 == '进') {
-			x = this.isRed() ? x + num : x - num;
-		} else if (cmd1 == '平') {
-			y = ChessTools.transLineToY(cmd2, this.getPLAYER_ROLE());
-		} else {
-			throw new RuntimeException();
-		}
-		return ChessTools.toPosition(x, y);
-	}
-
-	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
-		reachableNum = 0;
-		int currX = ChessTools.fetchX(currPosition);
-		int currY = ChessTools.fetchY(currPosition);
-
-		findReachablePositions(currX, currY, board.getAllPiece());
-		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
-	}
-
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
-		if (isRed()) {
-			if (currX <= 4) {
-				tryReach(currX + 1, currY, allPiece);
-			} else {
-				tryReach(currX + 1, currY, allPiece);
-				tryReach(currX, currY - 1, allPiece);
-				tryReach(currX, currY + 1, allPiece);
-			}
-		} else {
-			if (currX >= 5) {
-				tryReach(currX - 1, currY, allPiece);
-			} else {
-				tryReach(currX - 1, currY, allPiece);
-				tryReach(currX, currY - 1, allPiece);
-				tryReach(currX, currY + 1, allPiece);
-			}
-		}
-	}
-
-	private void tryReach(int x, int y, Map<Integer, AbstractChessPiece> allPiece) {
-		if (!isValid(x, y)) {
-			return;
-		}
-		AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, y));
-		if (piece == null || isEnemy(this, piece)) {
-			recordReachablePosition(ChessTools.toPosition(x, y));
-		}
 	}
 
 	/**
@@ -138,7 +57,7 @@ public class Pawns extends AbstractChessPiece {
 		Position position = this.getCurrPosition();
 		Integer x = position.getX();
 		Integer y = position.getY();
-		if(this.getPLAYER_ROLE().equals(Role.RED)){	// 先手
+		if(this.getPLAYER_ROLE().equals(PlayerRole.ON_THE_OFFENSIVE)){	// 先手
 			if(y < 5){	// 没有过河的情况，当前的兵只能有一个位置可走
 				addValidPosition(x, y + 1, reachableMap, allMap);	// 只有向上
 			}else {	// 过河的情况
@@ -146,7 +65,7 @@ public class Pawns extends AbstractChessPiece {
 				addValidPosition(x - 1, y, reachableMap, allMap);	// 2、向左
 				addValidPosition(x + 1, y, reachableMap, allMap);	// 3、向右
 			}
-		} else if(this.getPLAYER_ROLE().equals(Role.BLACK)){	// 后手
+		} else if(this.getPLAYER_ROLE().equals(PlayerRole.DEFENSIVE_POSITION)){	// 后手
 			if(y >= 5){	// 没有过河的情况，当前的兵只能有一个位置可走
 				addValidPosition(x, y - 1, reachableMap, allMap);	// 只有向下
 			}else{	// 过河的情况

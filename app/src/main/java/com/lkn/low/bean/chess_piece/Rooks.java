@@ -1,11 +1,9 @@
-package com.lkn.chess.bean.chess_piece;
+package com.lkn.low.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
-import com.lkn.chess.ChessTools;
-import com.lkn.chess.PubTools;
-import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
-import com.lkn.chess.bean.Role;
+import com.lkn.low.PubTools;
+import com.lkn.low.bean.ChessBoard;
+import com.lkn.low.bean.PlayerRole;
+import com.lkn.low.bean.Position;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,19 +13,12 @@ import java.util.Map;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Rooks extends AbstractChessPiece {
-	public static final int RED_NUM = 1;
-	public static final int BLACK_NUM = 10;
-
-	public Rooks(Role role) {
-		this(null, role);
-	}
-
-	public Rooks(String id, Role role) {
-		super(id, role);
+	
+	public Rooks(String id, PlayerRole PLAYER_ROLE) {
+		super(id, PLAYER_ROLE);
 		setValues();
 		this.setFightDefaultVal(600);
 		this.setName("车");
-		initNum(role, RED_NUM, BLACK_NUM);
 	}
 	
 	/**
@@ -51,36 +42,6 @@ public class Rooks extends AbstractChessPiece {
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
 	}
 
-	@Override
-	public byte type() {
-		return (byte) (isRed() ? 1 : 8);
-	}
-
-	@Override
-	public int valuation(ChessBoard board, int position) {
-		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
-		int x = ChessTools.fetchX(position);
-		int y = ChessTools.fetchY(position);
-		return 550 + arr[x][y];
-	}
-
-	@Override
-	public int walkAsManual(ChessBoard board, int startPos, char cmd1, char cmd2) {
-		int x = ChessTools.fetchX(startPos);
-		int y = ChessTools.fetchY(startPos);
-		int num = ChessTools.transToNum(cmd2);
-		if (cmd1 == '进') {
-			x = this.isRed() ? x + num : x - num;
-		} else if (cmd1 == '退') {
-			x = this.isRed() ? x - num : x + num;
-		} else if (cmd1 == '平') {
-			y = ChessTools.transLineToY(cmd2, this.getPLAYER_ROLE());
-		} else {
-			throw new RuntimeException();
-		}
-		return ChessTools.toPosition(x, y);
-	}
-
 	/**
 	 * 车在棋盘上可达的位置集合
 	 */
@@ -90,72 +51,7 @@ public class Rooks extends AbstractChessPiece {
 		Position currPosition = this.getCurrPosition();	// 车当前的位置
 		return rooksOperate(currPosition, allMap);
 	}
-
-	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
-		reachableNum = 0;
-		int currX = ChessTools.fetchX(currPosition);
-		int currY = ChessTools.fetchY(currPosition);
-
-		findReachablePositions(currX, currY, board.getAllPiece());
-		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
-	}
-
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
-		AbstractChessPiece piece = null;
-		// 向上找
-		for (int i = currX + 1; i < 10; i++) {
-			int position = ChessTools.toPosition(i, currY);
-			if ((piece = allPiece.get(position)) == null) {
-				recordReachablePosition(position);
-			} else {
-				if (isEnemy(this, piece)) {
-					recordReachablePosition(position);
-				}
-				break;
-			}
-		}
-		// 向下找
-		for (int i = currX - 1; i >= 0; i--) {
-			int position = ChessTools.toPosition(i, currY);
-			if ((piece = allPiece.get(position)) == null) {
-				recordReachablePosition(position);
-			} else {
-				if (isEnemy(this, piece)) {
-					recordReachablePosition(position);
-				}
-				break;
-			}
-		}
-		// 向右找
-		for (int i = currY + 1; i < 9; i++) {
-			int position = ChessTools.toPosition(currX, i);
-			if ((piece = allPiece.get(position)) == null) {
-				recordReachablePosition(position);
-			} else {
-				if (isEnemy(this, piece)) {
-					recordReachablePosition(position);
-				}
-				break;
-			}
-		}
-		// 向左找
-		for (int i = currY - 1; i >= 0; i--) {
-			int position = ChessTools.toPosition(currX, i);
-			if ((piece = allPiece.get(position)) == null) {
-				recordReachablePosition(position);
-			} else {
-				if (isEnemy(this, piece)) {
-					recordReachablePosition(position);
-				}
-				break;
-			}
-		}
-	}
-
+	
 	/**
 	 * 车的行为
 	 * @author:likn1	Jan 11, 2016  3:22:26 PM
@@ -264,7 +160,7 @@ public class Rooks extends AbstractChessPiece {
 		}
 		return reachableUP;
 	}
-
+	
 	@Override
 	public String chessRecordes(Position begin, Position end, ChessBoard board) {
 		return chessRecordesStraight(begin, end, board);
