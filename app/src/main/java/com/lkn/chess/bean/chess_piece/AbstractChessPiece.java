@@ -6,9 +6,10 @@ import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Position;
 import com.lkn.chess.bean.Role;
 
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * 象棋中棋子的抽象类，每个旗子都设置一个唯一编号
@@ -38,8 +39,9 @@ import java.util.Set;
 public abstract class AbstractChessPiece implements Cloneable {
 	private String id;			// 棋子唯一的编号
 	private String name;		// 棋子名称
+	private String showName;		// 棋子名称
 	private Integer fightVal;	// 棋子战斗力（某个数值，战斗力会随着棋势的进行发生变更）
-	protected Integer fightDefaultVal;	// 棋子默认战斗力，不会发生改变
+	protected Integer defaultVal;	// 棋子默认战斗力，不会发生改变
 	private final Role PLAYER_ROLE;	// 象棋先后手
 	private boolean isAlive;	// 是否在战斗，默认为true
 	private Position currPosition;	// 棋子当前的位置
@@ -98,18 +100,99 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return clone;
 	}
 
+
+	/**
+	 * 棋子可能被吃掉，例如一个马被4个卒夹击，那这个马的价值可能趋于0了
+	 * 	 	卒
+	 * 	  卒马卒
+	 * 		卒
+	 */
+	protected int eatenValue(ChessBoard board, int currPosition) {
+		int[] redValArr = board.getRedNextStepPositionArr()[currPosition];
+		int[] blackValArr = board.getBlackNextStepPositionArr()[currPosition];
+
+		int[] ownValArr = isRed() ? redValArr : blackValArr;
+		int[] enemyValArr = isRed() ? blackValArr : redValArr;
+		if (enemyValArr[0] == 0) {
+			return 0;
+		} else {
+			int ownLength = ownValArr[0];
+			int enemyLength = enemyValArr[0];
+			Arrays.sort(ownValArr, 1, ownLength + 1);
+			Arrays.sort(enemyValArr, 1, enemyLength + 1);
+			return calcEatenValue(ownValArr, enemyValArr);
+		}
+	}
+
+	private int calcEatenValue(int[] ownValArr, int[] enemyValArr) {
+		int ownLength = ownValArr[0];
+		int enemyLength = enemyValArr[0];
+		int ownI = 1;
+		int enemyI = 1;
+
+		int enemyLossVal = 0;
+		int ownLossVal = 0;
+		int lastVal = this.getDefaultVal();
+		while (true) {
+			if (enemyI > enemyLength) {
+				break;
+			}
+			int enemyVal = enemyValArr[enemyI++];
+			ownLossVal += lastVal;
+			lastVal = enemyVal;
+
+
+			if (ownI > ownLength) {
+				break;
+			}
+			int ownVal = ownValArr[ownI++];
+			enemyLossVal += lastVal;
+			lastVal = ownVal;
+		}
+
+		// 如果敌人损失的超过了我们自己损失的，那么认为当前棋子没有被吃的风险
+		if (enemyLossVal >= ownLossVal) {
+			return 0;
+		} else {
+			return ownLossVal - enemyLossVal;
+		}
+	}
+
+
+	private boolean canProtected(AbstractChessPiece enemyPiece, Integer enemyPos, ChessBoard board, int targetPosition) {
+		byte[] reachablePositions = enemyPiece.getReachablePositions(enemyPos, board, true);
+		byte size = reachablePositions[0];
+		for (int i = 1; i <= size; i++) {
+			byte targetPos = reachablePositions[i];
+			if (targetPos == targetPosition) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean canEat(AbstractChessPiece enemyPiece, Integer enemyPos, ChessBoard board, int targetPosition) {
+		byte[] reachablePositions = enemyPiece.getReachablePositions(enemyPos, board, false);
+		byte size = reachablePositions[0];
+		for (int i = 1; i <= size; i++) {
+			byte targetPos = reachablePositions[i];
+			if (targetPos == targetPosition) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	protected boolean isEnemy(AbstractChessPiece piece1, AbstractChessPiece piece2) {
 		return piece1.getPLAYER_ROLE() != piece2.getPLAYER_ROLE();
 	}
-	
-	/**
-	 * 获取当前子力能够到达的位置
-	 * @author:likn1	Jan 5, 2016  5:20:28 PM
-	 * @return
-	 */
-	public abstract Map<String, Position> getReachablePositions(ChessBoard board);
 
-	public abstract byte[] getReachablePositions(int currPosition, ChessBoard board);
+	protected boolean isFriend(AbstractChessPiece piece1, AbstractChessPiece piece2) {
+		return piece1.getPLAYER_ROLE() == piece2.getPLAYER_ROLE();
+	}
+
+	public abstract byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece);
 
 	public abstract int valuation(ChessBoard board, int position);
 
@@ -133,6 +216,14 @@ public abstract class AbstractChessPiece implements Cloneable {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getShowName() {
+		return showName;
+	}
+
+	public void setShowName(String showName) {
+		this.showName = showName;
 	}
 
 	public Integer getFightVal() {
@@ -165,15 +256,15 @@ public abstract class AbstractChessPiece implements Cloneable {
 	
 	/**
 	 * 设置棋子的默认攻击力，同时为fightVal设置值，一般只在构造方法中调用
-	 * @param fightDefaultVal
+	 * @param defaultVal
 	 */
-	public void setFightDefaultVal(Integer fightDefaultVal) {
-		this.fightDefaultVal = fightDefaultVal;
-		this.setFightVal(fightDefaultVal);
+	public void setDefaultVal(Integer defaultVal) {
+		this.defaultVal = defaultVal;
+		this.setFightVal(defaultVal);
 	}
 	
-	public Integer getFightDefaultVal() {
-		return fightDefaultVal;
+	public int getDefaultVal() {
+		return defaultVal;
 	}
 
 	protected void recordReachablePosition(int position) {
@@ -185,21 +276,28 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return x >= 0 && x < 10 && y >= 0 && y < 9;
 	}
 
-	protected boolean hasPiece(Map<Integer, AbstractChessPiece> allPiece, int x, int y) {
-		return allPiece.get(ChessTools.toPosition(x, y)) != null;
-	}
-
-	protected int findPositionByName(Map<Integer, AbstractChessPiece> allPiece, String name) {
-		for (Map.Entry<Integer, AbstractChessPiece> entry : allPiece.entrySet()) {
-			if (entry.getValue().getName().equals(name)) {
-				return entry.getKey();
+	protected int findKingPositionByName(AbstractChessPiece[][] allPiece, boolean isRed) {
+		if (isRed) {
+			for (int x = 0; x <= 2; x++) {
+				for (int y = 3; y <= 5; y++) {
+					AbstractChessPiece piece = allPiece[x][y];
+					if (piece != null && piece.type() == 5) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		} else {
+			for (int x = 7; x <= 9; x++) {
+				for (int y = 3; y <= 5; y++) {
+					AbstractChessPiece piece = allPiece[x][y];
+					if (piece != null && piece.type() == 12) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
 			}
 		}
 
 		System.out.println(" --------- ");
-		for (Map.Entry<Integer, AbstractChessPiece> entry : allPiece.entrySet()) {
-			System.out.println(entry.getValue().getName());
-		}
 		throw new RuntimeException();
 	}
 
@@ -243,198 +341,7 @@ public abstract class AbstractChessPiece implements Cloneable {
 		} else {	// 后手
 			changeVal = VAL_BLACK[y][x];
 		}
-		setFightVal(fightDefaultVal + changeVal);	// 设置战斗力
-	}
-	
-	/**
-	 * 棋谱记录
-	 * @param begin
-	 * @param end
-	 * @param board
-	 * @return
-	 */
-	public abstract String chessRecordes(Position begin, Position end, ChessBoard board);
-	
-	/**
-	 * 可以直来直去走的棋子，有“车”，“将”，“炮”，“兵”
-	 * @param begin
-	 * @param end
-	 * @param board
-	 * @return
-	 */
-	protected String chessRecordesStraight(Position begin, Position end, ChessBoard board){
-		StringBuffer sb = new StringBuffer();
-		appendFirstAndSecondWord(sb, begin, board);	// 拼接第一个、第二个棋谱字符
-		/**第三个字*****************************************/
-		String thirdWord = judgeForwardAndBackoff(begin, end);
-		sb.append(thirdWord);
-		/**第四个字*****************************************/
-		String forthStr = null;
-		if(begin.getX() == end.getX()){
-			int forthNum = Math.abs(end.getY() - begin.getY());
-			forthStr = this.getPLAYER_ROLE() == Role.RED ? ChessTools.getRedRecordesArr()[forthNum - 1] : ChessTools.getBlackRecordesArr()[forthNum - 1];
-		} else {	// 平
-			forthStr = ChessTools.getRecordeShowByX(this.getPLAYER_ROLE(), end.getX());	// 通过X坐标，返回该棋子的棋谱正常显示
-		}
-		sb.append(forthStr);
-		return sb.toString();
-	}
-
-	/**
-	 * 不能直来直去走的棋子，有“马”，“相”，“士”
-	 * @param begin
-	 * @param end
-	 * @param board
-	 * @return
-	 */
-	protected String chessRecordesCurved(Position begin, Position end, ChessBoard board){
-		StringBuffer sb = new StringBuffer();
-		appendFirstAndSecondWord(sb, begin, board);	// 拼接第一个、第二个棋谱字符
-		/**第三个字*****************************************/
-		String thirdWord = judgeForwardAndBackoff(begin, end);
-		sb.append(thirdWord);
-		/**第四个字*****************************************/
-		String forthStr = ChessTools.getRecordeShowByX(this.getPLAYER_ROLE(), end.getX());	// 通过X坐标，返回该棋子的棋谱正常显示
-		sb.append(forthStr);
-		return sb.toString();
-	}
-	
-	/**
-	 * 返回棋谱中的第三个字，“进” 或 “退” 或 “平”
-	 * @param begin
-	 * @param end
-	 * @return
-	 */
-	private String judgeForwardAndBackoff(Position begin, Position end) {
-		String thirdWord = null;
-		if(begin.getY() != end.getY()){
-			thirdWord = end.getY() > begin.getY() ? (this.getPLAYER_ROLE() == Role.RED ? "进" : "退") : (this.getPLAYER_ROLE() == Role.RED ? "退" : "进");
-		}else {
-			thirdWord = "平";
-		}
-		return thirdWord;
-	}
-	
-	/**
-	 * 拼接4个字的棋谱中的第一个、第二个字符
-	 * @param sb
-	 * @param begin
-	 * @param board 
-	 */
-	private void appendFirstAndSecondWord(StringBuffer sb, Position begin, ChessBoard board) {
-		boolean existOtherPiece = false;
-		Position currPosition = this.getCurrPosition();
-		Role ROLE = this.getPLAYER_ROLE();
-		Map<String, Position> map = ChessTools.getAllChess_Y(board.getPositionMap(), begin);
-		for (Position position : map.values()) {
-			AbstractChessPiece piece = position.getPiece();
-			/**存在棋子、且在战斗、且与当前棋子同属一角色、且与当前棋子名字一样*/
-			if(position.isExistPiece() && piece.isAlive && piece.PLAYER_ROLE == this.PLAYER_ROLE && piece.getName().equals(this.getName()) && !position.isSameXandY(currPosition)){
-				String firstWord = position.getY() > currPosition.getY() ? (ROLE == Role.RED ? "后" : "前") : (ROLE == Role.RED ? "前" : "后");
-				/**拼接第一个、第二个字符*/
-				sb.append(firstWord);
-				sb.append(this.getName());
-				existOtherPiece = true;
-				break;
-			}
-		}
-		/**如果不存在两个相同类型的棋子在同一个X轴上*/
-		if(!existOtherPiece){
-			/**第一个字*****************************************/
-			sb.append(this.getName());
-			/**第二个字*****************************************/
-			String secondWord = ChessTools.getRecordeShowByX(this.getPLAYER_ROLE(), begin.getX());	// 通过X坐标，返回该棋子的棋谱正常显示
-			sb.append(secondWord);
-		}
-	}
-	public abstract Position walkRecorde(ChessBoard board, String third, String forth);
-	
-	/**
-	 * 直来直去的行走方式
-	 * @author:likn1	Feb 4, 2016  3:18:10 PM
-	 * @param board
-	 * @param third
-	 * @param forth
-	 * @return
-	 */
-	protected Position walkRecordeStraight(ChessBoard board, String third, String forth){
-		Position position = null;
-		Integer currX = this.getCurrPosition().getX();
-		Integer currY = this.getCurrPosition().getY();
-		int X = currX;
-		int Y = currY;
-		if(third.equals("进")){
-			int number = getForthNumber(String.valueOf(forth));
-			Y = this.getPLAYER_ROLE() == Role.RED ? currY + number : currY - number;
-		} else if(third.equals("退")){
-			int number = getForthNumber(String.valueOf(forth));
-			Y = this.getPLAYER_ROLE() == Role.RED ? currY - number : currY + number;
-		} else if(third.equals("平")){
-			X = ChessTools.getXByRecordeShow(this.getPLAYER_ROLE(), String.valueOf(forth));
-		}
-		position = isInReachableMap(board.getPositionMap().get(ChessTools.getPositionID(X, Y)), board);
-		return position;
-	}
-
-	private int getForthNumber(String forth) {
-		int returnNum = -1;
-		for (int i = 0; i < ChessTools.getRedRecordesArr().length; i++) {
-			if(ChessTools.getRedRecordesArr()[i].equals(forth)){
-				returnNum = i + 1;
-				break;
-			}
-		}
-		for (int i = 0; i < ChessTools.getBlackRecordesArr().length; i++) {
-			if(ChessTools.getBlackRecordesArr()[i].equals(forth)){
-				returnNum = i + 1;
-				break;
-			}
-		}
-		return returnNum;
-	}
-	
-	protected Position walkRecordeCurved(ChessBoard board, String third, String forth){
-		Position returnPosition = null;
-		int X = ChessTools.getXByRecordeShow(this.getPLAYER_ROLE(), String.valueOf(forth));;
-		Set<Position> set = new HashSet<Position>();
-		Map<String, Position> map = this.getReachablePositions(board);
-		for (Position position : map.values()) {
-			if(position.getX().equals(X)){
-				set.add(position);
-			}
-		}
-		if(set.size() == 0){
-		}else if(set.size() == 1){
-			Position tempPostion = PubTools.getSetIndexEle(set, 0);
-			String direction = ChessTools.judgePieceDirection(this.getCurrPosition().getY(), tempPostion.getY(), this.getPLAYER_ROLE());
-			if(direction.equals(third)){
-				returnPosition = tempPostion;
-			}
-		}else {
-			Position p1 = PubTools.getSetIndexEle(set, 0);
-			Position p2 = PubTools.getSetIndexEle(set, 1);
-			if(third.equals("进")){
-				returnPosition = this.getPLAYER_ROLE() == Role.RED ? (p2.getY() > p1.getY() ? p2 : p1) : (p2.getY() > p1.getY() ? p1 : p2);
-			} else if(third.equals("退")){
-				returnPosition = this.getPLAYER_ROLE() == Role.RED ? (p2.getY() > p1.getY() ? p1 : p2) : (p2.getY() > p1.getY() ? p2 : p1);
-			}
-		}
-		returnPosition = isInReachableMap(returnPosition, board);
-		return returnPosition;
-	}
-	
-	
-	private Position isInReachableMap(Position target, ChessBoard board){
-		Position returnPosition = null;
-		if(target != null){
-			for (Position position : this.getReachablePositions(board).values()) {
-				if(position.getID().equals(target.getID())){
-					returnPosition = position;
-					break;
-				}
-			}
-		}
-		return returnPosition;
+		setFightVal(defaultVal + changeVal);	// 设置战斗力
 	}
 	
 }

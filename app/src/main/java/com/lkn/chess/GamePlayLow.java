@@ -28,7 +28,6 @@ public class GamePlayLow {
 	 * 电脑考虑后走棋
 	 * 1、电脑考虑
 	 * 2、电脑走棋
-	 * @param board
 	 */
 	public void computerWalk(ChessBoard chessBoard){
 		long begin = System.currentTimeMillis();
@@ -42,11 +41,10 @@ public class GamePlayLow {
 
 	/**
 	 * 1、电脑考虑
-	 * @param board
 	 */
 	public void computerThink(ChessBoard chessBoard){
 		bestResultMap.clear();
-		walkThink(chessBoard, Conf.getComputerRole(), 1, Conf.getGamePlayMaxVal());
+//		walkThink(chessBoard, Conf.getComputerRole(), 1, Conf.getGamePlayMaxVal());
 	}
 	
 	/**
@@ -61,53 +59,43 @@ public class GamePlayLow {
 	private Position bestEndPosition = null;
 	private ChessWalkBean walkBean = new ChessWalkBean();
 	private int number = 0;
-	private Integer walkThink(ChessBoard board, Role currWalkRole, int depth, int lastStepVal){
-		Set<AbstractChessPiece> set = board.getPiecesByPlayRole(currWalkRole);	// 获取当前角色可走的棋子集合
-		int maxOrMinVal = initVal(currWalkRole);
-		for (AbstractChessPiece piece : set) {	// 遍历每个棋子
-			Position beginPosition = piece.getCurrPosition();	// 开始的位置
-			Map<String, Position> reachableMap = piece.getReachablePositions(board);	// 获取该棋子可行走的位置集合
-			for (Position position : reachableMap.values()) {
-				int val = 0;
-				AbstractChessPiece[] walkArr = walkBean.walk(beginPosition, position);	// 走一步
-				if(depth == Conf.getThinkDepth()){	// 如果已经到达最大深度
-					val = board.getHigherFightValByRole(Conf.getComputerRole());
-					++number;
-				} else {
-					val = walkThink(board, Role.nextRole(currWalkRole), depth + 1, maxOrMinVal);
-				}
-				walkBean.walkBack(beginPosition, position, walkArr);	// 回走
-				
-				if(currWalkRole.equals(Conf.getComputerRole())){
-					if(depth == 1 && val > maxOrMinVal){
-						System.out.println(val);
-						bestBeginPosition = beginPosition;
-						bestEndPosition = position;
-					}
-					if(val > maxOrMinVal){
-						maxOrMinVal = val;
-					}
-					if(val > lastStepVal){	// β剪枝
-						return Conf.getGamePlayMaxVal();
-					}
-				} else {
-					maxOrMinVal = val < maxOrMinVal ? val : maxOrMinVal;
-					if(val < lastStepVal){	// α剪枝
-						return Conf.getGamePlayMinVal();
-					}
-				}
-			}
-		}
-		return maxOrMinVal;
-	}
-
-	private int initVal(Role currWalkRole) {
-		int returnVal = 0;
-		if(currWalkRole == Conf.getComputerRole()){
-			returnVal = Conf.getGamePlayMinVal();
-		} else {
-			returnVal = Conf.getGamePlayMaxVal();
-		}
-		return returnVal;
-	}
+//	private Integer walkThink(ChessBoard board, Role currWalkRole, int depth, int lastStepVal){
+//		Set<AbstractChessPiece> set = board.getPiecesByPlayRole(currWalkRole);	// 获取当前角色可走的棋子集合
+//		int maxOrMinVal = initVal(currWalkRole);
+//		for (AbstractChessPiece piece : set) {	// 遍历每个棋子
+//			Position beginPosition = piece.getCurrPosition();	// 开始的位置
+//			Map<String, Position> reachableMap = piece.getReachablePositions(board);	// 获取该棋子可行走的位置集合
+//			for (Position position : reachableMap.values()) {
+//				int val = 0;
+//				AbstractChessPiece[] walkArr = walkBean.walk(beginPosition, position);	// 走一步
+//				if(depth == Conf.getThinkDepth()){	// 如果已经到达最大深度
+//					val = board.getHigherFightValByRole(Conf.getComputerRole());
+//					++number;
+//				} else {
+//					val = walkThink(board, Role.nextRole(currWalkRole), depth + 1, maxOrMinVal);
+//				}
+//				walkBean.walkBack(beginPosition, position, walkArr);	// 回走
+//
+//				if(currWalkRole.equals(Conf.getComputerRole())){
+//					if(depth == 1 && val > maxOrMinVal){
+//						System.out.println(val);
+//						bestBeginPosition = beginPosition;
+//						bestEndPosition = position;
+//					}
+//					if(val > maxOrMinVal){
+//						maxOrMinVal = val;
+//					}
+//					if(val > lastStepVal){	// β剪枝
+//						return Conf.getGamePlayMaxVal();
+//					}
+//				} else {
+//					maxOrMinVal = val < maxOrMinVal ? val : maxOrMinVal;
+//					if(val < lastStepVal){	// α剪枝
+//						return Conf.getGamePlayMinVal();
+//					}
+//				}
+//			}
+//		}
+//		return maxOrMinVal;
+//	}
 }

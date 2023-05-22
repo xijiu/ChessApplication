@@ -197,15 +197,15 @@ public class Manual {
             return transToBeginPos(chessBoard, role, line, pieceName == '前');
         }
         int targetY = ChessTools.transLineToY(line, role);
-        Map<Integer, AbstractChessPiece> map = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
-        for (Map.Entry<Integer, AbstractChessPiece> entry : map.entrySet()) {
-            Integer pos = entry.getKey();
-            int y = ChessTools.fetchY(pos);
-            AbstractChessPiece piece = entry.getValue();
-            if (piece.getName().equals(String.valueOf(pieceName)) && targetY == y) {
-                return entry;
-            }
-        }
+//        Map<Integer, AbstractChessPiece> map = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
+//        for (Map.Entry<Integer, AbstractChessPiece> entry : map.entrySet()) {
+//            Integer pos = entry.getKey();
+//            int y = ChessTools.fetchY(pos);
+//            AbstractChessPiece piece = entry.getValue();
+//            if (piece.getName().equals(String.valueOf(pieceName)) && targetY == y) {
+//                return entry;
+//            }
+//        }
         throw new RuntimeException("transToBeginPos error");
     }
 
@@ -215,17 +215,17 @@ public class Manual {
         }
         Map.Entry<Integer, AbstractChessPiece> entry1 = null;
         Map.Entry<Integer, AbstractChessPiece> entry2 = null;
-        Map<Integer, AbstractChessPiece> map = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
-        for (Map.Entry<Integer, AbstractChessPiece> entry : map.entrySet()) {
-            AbstractChessPiece piece = entry.getValue();
-            if (piece.getName().equals(String.valueOf(pieceName))) {
-                if (entry1 == null) {
-                    entry1 = entry;
-                } else {
-                    entry2 = entry;
-                }
-            }
-        }
+//        Map<Integer, AbstractChessPiece> map = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
+//        for (Map.Entry<Integer, AbstractChessPiece> entry : map.entrySet()) {
+//            AbstractChessPiece piece = entry.getValue();
+//            if (piece.getName().equals(String.valueOf(pieceName))) {
+//                if (entry1 == null) {
+//                    entry1 = entry;
+//                } else {
+//                    entry2 = entry;
+//                }
+//            }
+//        }
 
         Integer pos1 = entry1.getKey();
         int x1 = ChessTools.fetchX(pos1);

@@ -23,8 +23,6 @@ import com.lkn.chess.GamePlayHigh;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 
-import java.util.Map;
-
 
 public class GameView extends View {
 
@@ -46,6 +44,7 @@ public class GameView extends View {
 	private boolean computerThinking = false;	// 电脑是否在思考中
 	private int lastWalkBegin;
 	private int lastWalkEnd;
+	private boolean gameOver = false;
 
 	public void setPlayerTurn(boolean isPlayerTurn) {
 		this.isPlayerTurn = isPlayerTurn;
@@ -120,20 +119,20 @@ public class GameView extends View {
 		textPaint.setTypeface(Typeface.SANS_SERIF);
 		FontMetricsInt fontMetrics = textPaint.getFontMetricsInt();  
 	    int baseline = (int)((startY + 10.25*GRID_WIDTH) * 2 - fontMetrics.bottom - fontMetrics.top) / 2;  
-		canvas.drawText("小白", startX+2*GRID_WIDTH, baseline, textPaint);
+		canvas.drawText("小孩", startX+2*GRID_WIDTH, baseline, textPaint);
 		
 		/****************************************************************************************************************************************/
 		RectF rect2 = new RectF(startX + 3.25f*GRID_WIDTH, startY+10*GRID_WIDTH, startX + 4.75f*GRID_WIDTH, startY+10.5f*GRID_WIDTH);
 		paint.setColor(Color.BLACK);
         if(Conf.THINK_DEPTH == 4){paint.setColor(Color.GREEN);}
 		canvas.drawRect(rect2, paint);
-        canvas.drawText("新手", startX+4*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("大叔", startX+4*GRID_WIDTH, baseline, textPaint);
 		/****************************************************************************************************************************************/
         RectF rect3 = new RectF(startX + 5.25f*GRID_WIDTH, startY+10*GRID_WIDTH, startX + 6.75f*GRID_WIDTH, startY+10.5f*GRID_WIDTH);
         paint.setColor(Color.BLACK);
         if(Conf.THINK_DEPTH == 5){paint.setColor(Color.GREEN);}
         canvas.drawRect(rect3, paint);
-        canvas.drawText("入门", startX+6*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("老头", startX+6*GRID_WIDTH, baseline, textPaint);
 	}
 	/**
 	 * 画楚河汉界四个汉字
@@ -259,7 +258,7 @@ public class GameView extends View {
 	//重写View的监听触摸事件的方法
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if(!isPlayerTurn){
+		if (!isPlayerTurn) {
 			return super.onTouchEvent(event);
 		}
 		
@@ -288,6 +287,9 @@ public class GameView extends View {
 	            }).setNegativeButton("否" , null).show(); 
 			}
 		} else {
+			if (gameOver) {
+				return super.onTouchEvent(event);
+			}
 			//根据点击的位置，从�?获知在棋盘上的哪个位置，即是数组的脚�?
 			int index_x = Math.round((touchX-startX)/GRID_WIDTH);
 			int index_y = Math.round((touchY-startY)/GRID_WIDTH);
@@ -301,7 +303,7 @@ public class GameView extends View {
 				soundPool.play(1,1, 1, 0, 0, 1);
 				firstPressPiece(pressPosition);	// 第一次按下某个棋子时
 			} else {
-				byte[] reachablePositions = pressPiece.getReachablePositions(pressPiecePosition, board);
+				byte[] reachablePositions = pressPiece.getReachablePositions(pressPiecePosition, board, false);
 				byte size = reachablePositions[0];
 				boolean valid = false;
 				for (int i = 1; i <= size; i++) {
@@ -314,12 +316,10 @@ public class GameView extends View {
 
 				if (valid) {
 					board.walk(pressPiecePosition, pressPosition);
+					lastWalkBegin = pressPiecePosition;
+					lastWalkEnd = pressPosition;
 					soundPool.play(1,1, 1, 0, 0, 1);//播放下棋声音
-					boolean gameOver = judgeGameOver();	// 判断游戏是否结束
-					if (gameOver) {
-						invalidate();
-						return super.onTouchEvent(event);
-					}
+					judgeGameOver();	// 判断游戏是否结束
 					isPlayerTurn = false;
 					isComputerTurn = true;
 					pressPiece = null;
@@ -331,7 +331,7 @@ public class GameView extends View {
 			}
 		}
 		invalidate();	//点击完成后，通知重绘即再次执行onDraw方法
-		if(isComputerTurn){
+		if (isComputerTurn) {
 			computerThinking = true;
 			new LongTimeTask().execute();
 		}
@@ -349,18 +349,45 @@ public class GameView extends View {
 		pressPiecePosition = -1;
 		cloneBoard = board.clone();
 		isPlayerTurn = true;
+		gameOver = false;
 	}
 	
 	/**
 	 * 判断游戏是否结束
 	 */
-	private boolean judgeGameOver() {
-		boolean over = false;
-		return over;
+	private void judgeGameOver() {
+		boolean redKingExist = false;
+		boolean blackKingExist = false;
+		AbstractChessPiece[][] allPiece = board.getAllPiece();
+		for (AbstractChessPiece[] abstractChessPieces : allPiece) {
+			for (AbstractChessPiece piece : abstractChessPieces) {
+				if (piece == null) {
+					continue;
+				}
+				if (piece.getName().equals("帅")) {
+					redKingExist = true;
+				}
+				if (piece.getName().equals("将")) {
+					blackKingExist = true;
+				}
+			}
+		}
+		if (redKingExist && blackKingExist) {
+			return;
+		}
+		String msg = null;
+		if (redKingExist) {
+			msg = "恭喜，你赢了！";
+		} else {
+			msg = "很遗憾，你输了";
+		}
+		new AlertDialog.Builder(context).setTitle("提示").setMessage(msg).setPositiveButton("确定" , null ).show();
+//		reBeginGame();
+		gameOver = true;
 	}
 	
 	private void firstPressPiece(int pressPosition) {
-		AbstractChessPiece piece = board.getAllPiece().get(pressPosition);
+		AbstractChessPiece piece = ChessTools.getPiece(board.getAllPiece(), pressPosition);
 		if (piece != null && piece.isRed()) {
 			pressPiece = piece;
 			pressPiecePosition = pressPosition;
@@ -371,11 +398,7 @@ public class GameView extends View {
 	private class LongTimeTask extends AsyncTask {
 		@Override
 		protected void onPostExecute(Object result){
-			if(judgeGameOver()){
-				cloneBoard = board.clone();
-				invalidate();
-				return;
-			}
+			judgeGameOver();
 			computerThinking = false;
 			invalidate();
 			setPlayerTurn(true);
@@ -383,6 +406,9 @@ public class GameView extends View {
 
 		@Override
 		protected Object doInBackground(Object... params) {
+			if (gameOver) {
+				return null;
+			}
 			int[] walkPath = play.computerWalk(board);
 			lastWalkBegin = walkPath[0];
 			lastWalkEnd = walkPath[1];
@@ -396,12 +422,12 @@ public class GameView extends View {
 	 * 绘制所有的棋子
 	 */
 	private void paintPieces(Canvas canvas) {
-		Map<Integer, AbstractChessPiece> allPiece = cloneBoard.getAllPiece();
+		AbstractChessPiece[][] allPiece = cloneBoard.getAllPiece();
 		for(int x = 0; x < LINE_NUM; x++) {
 			for(int y = 0; y < COLUMN_NUM; y++) {
 				int position = ChessTools.toPosition(x, y);
 				drawComputerWalkFoot(position, x, y, canvas);
-				AbstractChessPiece piece = allPiece.get(position);
+				AbstractChessPiece piece = allPiece[x][y];
 				if (piece != null) {
 					drawPiece(piece, x, y, canvas);
 				}
@@ -457,18 +483,6 @@ public class GameView extends View {
 		
 		FontMetricsInt fontMetrics = textPaint.getFontMetricsInt();  
 	    int baseline = (startY + x * GRID_WIDTH + startY + x * GRID_WIDTH - fontMetrics.bottom - fontMetrics.top) / 2;
-		canvas.drawText(piece.getName(), startX + y * GRID_WIDTH, baseline, textPaint);
-	}
-
-	/**
-	 * 坐标转换
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	private String pointConver(int i, int j){
-		int y = 9 - i;
-		int x = j;
-		return x + "" + y;
+		canvas.drawText(piece.getShowName(), startX + y * GRID_WIDTH, baseline, textPaint);
 	}
 }

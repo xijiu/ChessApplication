@@ -4,11 +4,11 @@ import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
 import com.lkn.chess.bean.Role;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * 马
@@ -25,8 +25,9 @@ public class Horse extends AbstractChessPiece {
 	public Horse(String id, Role role) {
 		super(id, role);
 		setValues();
-		this.setFightDefaultVal(270);
+		this.setDefaultVal(270);
 		this.setName("马");
+		this.setShowName("馬");
 		initNum(role, RED_NUM, BLACK_NUM);
 	}
 	
@@ -44,7 +45,7 @@ public class Horse extends AbstractChessPiece {
 				{  4, 12, 16, 14, 12, 14, 16, 12,  4},
 				{  2,  6,  8,  6, 10,  6,  8,  6,  2},
 				{  4,  2,  8,  8,  4,  8,  8,  2,  4},
-				{  0,  2,  4,  4, -2,  4,  4,  2,  0},
+				{  0,  2,  4,  4,-20,  4,  4,  2,  0},
 				{  0, -4,  0,  0,  0,  0,  0, -4,  0}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
@@ -97,12 +98,12 @@ public class Horse extends AbstractChessPiece {
 
 
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece());
+		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		byte[] result = ArrPool.borrow();
 		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
@@ -112,62 +113,65 @@ public class Horse extends AbstractChessPiece {
 	/**
 	 * 8个方向均需要检查
 	 */
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
+	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
 		int targetX = currX - 1;
 		int targetY = currY - 2;
 		int legX = currX;
 		int legY = currY - 1;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX + 1;
 		targetY = currY + 2;
 		legX = currX;
 		legY = currY + 1;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX - 2;
 		targetY = currY - 1;
 		legX = currX - 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX + 2;
 		targetY = currY + 1;
 		legX = currX + 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX - 1;
 		targetY = currY + 2;
 		legX = currX;
 		legY = currY + 1;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX - 2;
 		targetY = currY + 1;
 		legX = currX - 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX + 1;
 		targetY = currY - 2;
 		legX = currX;
 		legY = currY - 1;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 
 		targetX = currX + 2;
 		targetY = currY - 1;
 		legX = currX + 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece);
+		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
 	}
 
-	private void tryJump(int targetX, int targetY, int legX, int legY, Map<Integer, AbstractChessPiece> allPiece) {
+	private void tryJump(int targetX, int targetY, int legX, int legY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
 		if (isValid(targetX, targetY) && isValid(legX, legY)) {
 			// 不拌马腿
-			if (!allPiece.containsKey(ChessTools.toPosition(legX, legY))) {
-				AbstractChessPiece targetPiece = allPiece.get(ChessTools.toPosition(targetX, targetY));
+			if (allPiece[legX][legY] == null) {
+				AbstractChessPiece targetPiece = allPiece[targetX][targetY];
 				if (targetPiece == null || isEnemy(this, targetPiece)) {
+					recordReachablePosition(ChessTools.toPosition(targetX, targetY));
+				}
+				if (targetPiece != null && isFriend(this, targetPiece) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(targetX, targetY));
 				}
 			}
@@ -179,106 +183,13 @@ public class Horse extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-		return 250 + arr[x][y];
+
+		byte num = getReachablePositions(position, board, false)[0];
+
+		int eatenVal = eatenValue(board, position);
+//		int eatenVal = 0;
+		return Math.max(0, 250 + arr[x][y] + num * 5 - eatenVal);
 	}
 
-//	@Override
-//	public boolean canEat(ChessBoard board, int currPos, int targetPos) {
-//		Map<Integer, AbstractChessPiece> allPiece = board.getAllPiece();
-//		int currX = ChessTools.fetchX(currPos);
-//		int currY = ChessTools.fetchY(currPos);
-//		int targetX = ChessTools.fetchX(targetPos);
-//		int targetY = ChessTools.fetchY(targetPos);
-//
-//		return false;
-//	}
-
-	/**
-	 * 马的可达位置集合，共8个方位，且不需要区分玩家的角色
-	 */
-	@Override
-	public Map<String, Position> getReachablePositions(ChessBoard board) {
-		Map<String, Position> allMap = board.getPositionMap();
-		Map<String, Position> reachableMap = new HashMap<String, Position>();	// 可达map，最终需要返回
-		jumpUP(allMap, reachableMap);	// 向上跳最多2个方位
-		jumpRIGHT(allMap, reachableMap);	// 向右跳最多有2个方位
-		jumpLEFT(allMap, reachableMap);	// 向左跳最多有2个方位
-		jumpDOWN(allMap, reachableMap);	// 向下跳最多有2个方位
-		return reachableMap;
-	}
-
-	/**
-	 * 向左跳
-	 * @author:likn1	Jan 7, 2016  2:03:50 PM
-	 * @param allMap
-	 * @param reachableMap
-	 */
-	private void jumpLEFT(Map<String, Position> allMap, Map<String, Position> reachableMap) {
-		Integer x = this.getCurrPosition().getX();
-		Integer y = this.getCurrPosition().getY();
-		Position keyPosition = allMap.get(ChessTools.getPositionID(x - 1 , y));	// 如果此位置有子的话，那么将蹩马腿
-		if(keyPosition != null && !keyPosition.isExistPiece()){
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x - 2 , y + 1)), reachableMap);	// 上
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x - 2 , y - 1)), reachableMap);	// 下
-		}
-	}
-
-	/**
-	 * 向右跳
-	 * @author:likn1	Jan 7, 2016  2:00:39 PM
-	 * @param allMap
-	 * @param reachableMap
-	 */
-	private void jumpRIGHT(Map<String, Position> allMap, Map<String, Position> reachableMap) {
-		Integer x = this.getCurrPosition().getX();
-		Integer y = this.getCurrPosition().getY();
-		Position keyPosition = allMap.get(ChessTools.getPositionID(x + 1 , y));	// 如果此位置有子的话，那么将蹩马腿
-		if(keyPosition != null && !keyPosition.isExistPiece()){
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x + 2 , y + 1)), reachableMap);	// 上
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x + 2 , y - 1)), reachableMap);	// 下
-		}
-	}
-
-	/**
-	 * 向上跳
-	 * @author:likn1	Jan 7, 2016  10:30:55 AM
-	 * @param allMap
-	 * @param reachableMap
-	 */
-	private void jumpUP(Map<String, Position> allMap, Map<String, Position> reachableMap) {
-		Integer x = this.getCurrPosition().getX();
-		Integer y = this.getCurrPosition().getY();
-		Position keyPosition = allMap.get(ChessTools.getPositionID(x , y + 1));	// 如果此位置有子的话，那么将蹩马腿
-		if(keyPosition != null && !keyPosition.isExistPiece()){
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x - 1 , y + 2)), reachableMap);	// 左上位置
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x + 1 , y + 2)), reachableMap);	// 右上位置
-		}
-	}
-	
-	/**
-	 * 向下跳
-	 * @author:likn1	Jan 7, 2016  2:04:48 PM
-	 * @param allMap
-	 * @param reachableMap
-	 */
-	private void jumpDOWN(Map<String, Position> allMap, Map<String, Position> reachableMap) {
-		Integer x = this.getCurrPosition().getX();
-		Integer y = this.getCurrPosition().getY();
-		Position keyPosition = allMap.get(ChessTools.getPositionID(x , y - 1));	// 如果此位置有子的话，那么将蹩马腿
-		if(keyPosition != null && !keyPosition.isExistPiece()){
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x - 1 , y - 2)), reachableMap);	// 左上位置
-			ChessTools.putValidPositionToMap(this.getPLAYER_ROLE(), allMap.get(ChessTools.getPositionID(x + 1 , y - 2)), reachableMap);	// 右上位置
-		}
-	}
-
-	@Override
-	public String chessRecordes(Position begin, Position end, ChessBoard board) {
-		return chessRecordesCurved(begin, end, board);
-	}
-
-	@Override
-	public Position walkRecorde(ChessBoard board, String third, String forth) {
-		return walkRecordeCurved(board, third, forth);
-	}
 
 }

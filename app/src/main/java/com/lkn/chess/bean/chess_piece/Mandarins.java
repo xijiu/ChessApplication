@@ -4,10 +4,8 @@ import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
 import com.lkn.chess.bean.Role;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -25,11 +23,13 @@ public class Mandarins extends AbstractChessPiece {
 	public Mandarins(String id, Role role) {
 		super(id, role);
 		setValues();
-		this.setFightDefaultVal(120);
+		this.setDefaultVal(100);
 		if(role == Role.RED){	// 先手
 			this.setName("仕");
+			this.setShowName("仕");
 		}else {
 			this.setName("士");
+			this.setShowName("士");
 		}
 		initNum(role, RED_NUM, BLACK_NUM);
 	}
@@ -49,7 +49,7 @@ public class Mandarins extends AbstractChessPiece {
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  4,  0,  0,  0,  0},
+				{  0,  0,  0,  0, 10,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
@@ -66,7 +66,9 @@ public class Mandarins extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-		return 100 + arr[x][y];
+		int eatenVal = eatenValue(board, position);
+//		int eatenVal = 0;
+		return Math.max(0, defaultVal + arr[x][y] - eatenVal);
 	}
 
 	@Override
@@ -93,107 +95,48 @@ public class Mandarins extends AbstractChessPiece {
 	}
 
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece());
+		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		byte[] result = ArrPool.borrow();
 		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
 		return result;
 	}
 
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
+	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
 		if (isRed()) {
 			if (currX == 1 && currY == 4) {
-				tryReach(currX - 1, currY - 1, allPiece);
-				tryReach(currX - 1, currY + 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
+				tryReach(currX - 1, currY - 1, allPiece, containsProtectedPiece);
+				tryReach(currX - 1, currY + 1, allPiece, containsProtectedPiece);
+				tryReach(currX + 1, currY - 1, allPiece, containsProtectedPiece);
+				tryReach(currX + 1, currY + 1, allPiece, containsProtectedPiece);
 			} else {
-				tryReach(1, 4, allPiece);
+				tryReach(1, 4, allPiece, containsProtectedPiece);
 			}
 		} else {
 			if (currX == 8 && currY == 4) {
-				tryReach(currX - 1, currY - 1, allPiece);
-				tryReach(currX - 1, currY + 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
-				tryReach(currX + 1, currY - 1, allPiece);
+				tryReach(currX - 1, currY - 1, allPiece, containsProtectedPiece);
+				tryReach(currX - 1, currY + 1, allPiece, containsProtectedPiece);
+				tryReach(currX + 1, currY - 1, allPiece, containsProtectedPiece);
+				tryReach(currX + 1, currY + 1, allPiece, containsProtectedPiece);
 			} else {
-				tryReach(8, 4, allPiece);
+				tryReach(8, 4, allPiece, containsProtectedPiece);
 			}
 		}
 	}
 
-	private void tryReach(int x, int y, Map<Integer, AbstractChessPiece> allPiece) {
-		AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(x, y));
+	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+		AbstractChessPiece piece = allPiece[x][y];
 		if (piece == null || isEnemy(this, piece)) {
 			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
-	}
-
-	/**
-	 * 士只有5个点可以走
-	 * 1、如果当前位置是中心位置，那么有4个位置可走
-	 * 2、如果当前位置不是中心位置，那么只有一个中心位置可走
-	 */
-	@Override
-	public Map<String, Position> getReachablePositions(ChessBoard board) {
-		Map<String, Position> reachableMap = new HashMap<String, Position>();
-		Map<String, Position> allMap = board.getPositionMap();
-		Position p1 = null;
-		Position p2 = null;
-		Position p3 = null;
-		Position p4 = null;
-		Position center = null;
-		if(this.getPLAYER_ROLE().equals(Role.RED)){	// 先手
-			p1 = allMap.get(ChessTools.getPositionID(3, 0));
-			p2 = allMap.get(ChessTools.getPositionID(5, 0));
-			p3 = allMap.get(ChessTools.getPositionID(3, 2));
-			p4 = allMap.get(ChessTools.getPositionID(5, 2));
-			center = allMap.get(ChessTools.getPositionID(4, 1));
-		} else if(this.getPLAYER_ROLE().equals(Role.BLACK)){	// 后手
-			p1 = allMap.get(ChessTools.getPositionID(3, 9));
-			p2 = allMap.get(ChessTools.getPositionID(5, 9));
-			p3 = allMap.get(ChessTools.getPositionID(3, 7));
-			p4 = allMap.get(ChessTools.getPositionID(5, 7));
-			center = allMap.get(ChessTools.getPositionID(4, 8));
+		if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
-		
-		
-		if(this.getCurrPosition().getID().equals(center.getID())){	// 如果当前棋子在中心
-			if(ChessTools.isPositionReachable(this.getPLAYER_ROLE(), p1)){	// 如果p1可达
-				reachableMap.put(p1.getID(), p1);
-			}
-			if(ChessTools.isPositionReachable(this.getPLAYER_ROLE(), p2)){	// 如果p2可达
-				reachableMap.put(p2.getID(), p2);
-			}
-			if(ChessTools.isPositionReachable(this.getPLAYER_ROLE(), p3)){	// 如果p3可达
-				reachableMap.put(p3.getID(), p3);
-			}
-			if(ChessTools.isPositionReachable(this.getPLAYER_ROLE(), p4)){	// 如果p4可达
-				reachableMap.put(p4.getID(), p4);
-			}
-		} else {	// 如果不在中心
-			if(ChessTools.isPositionReachable(this.getPLAYER_ROLE(), center)){	// 如果中心可达
-				reachableMap.put(center.getID(), center);
-			}
-		}
-		return reachableMap;
-	}
-
-
-	@Override
-	public String chessRecordes(Position begin, Position end, ChessBoard board) {
-		return chessRecordesCurved(begin, end, board);
-	}
-
-
-	@Override
-	public Position walkRecorde(ChessBoard board, String third, String forth) {
-		return walkRecordeCurved(board, third, forth);
 	}
 
 }

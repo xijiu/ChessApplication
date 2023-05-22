@@ -71,12 +71,6 @@ public class ChessTools {
 		throw new RuntimeException();
 	}
 
-	public static void main(String[] args) {
-		System.out.println(transLineToY('8', Role.RED));
-		System.out.println(transLineToY('8', Role.BLACK));
-		System.out.println(transLineToY('八', Role.BLACK));
-	}
-
 	public static int transLineToY(char line, Role role) {
 		if (role == Role.RED) {
 			switch (line) {
@@ -171,6 +165,25 @@ public class ChessTools {
 
 	public static int fetchY(int position) {
 		return position % 10;
+	}
+
+	public static AbstractChessPiece getPiece(AbstractChessPiece[][] arr, int position) {
+		return arr[fetchX(position)][fetchY(position)];
+	}
+
+	public static AbstractChessPiece getPiece(AbstractChessPiece[][] arr, int x, int y) {
+		return arr[x][y];
+	}
+
+	public static void putPiece(AbstractChessPiece[][] arr, int position, AbstractChessPiece piece) {
+		arr[fetchX(position)][fetchY(position)] = piece;
+	}
+
+
+	public static AbstractChessPiece removePiece(AbstractChessPiece[][] arr, int position) {
+		AbstractChessPiece removePiece = arr[fetchX(position)][fetchY(position)];
+		arr[fetchX(position)][fetchY(position)] = null;
+		return removePiece;
 	}
 
 	public static int toPosition(int x, int y) {

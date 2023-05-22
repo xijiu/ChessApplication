@@ -30,38 +30,7 @@ public class ChessWalkBean {
 			this.fightVal = eatenPiece.getFightVal();
 		}
 	}
-	
-	/**
-	 * 电脑的行走价值
-	 * 1、如果是吃掉的对方的子，那么将返回该子的权值
-	 * 2、如果吃掉的是自己的子，那么将返回该子的权值的负数
-	 * 3、如果没有吃子行为，那么将返回0
-	 * @author:likn1	Jan 19, 2016  6:24:11 PM
-	 * @return
-	 */
-	public Integer walkValue(){
-		int val = 0;
-		if(isEat){
-			if(eatenPiece.getPLAYER_ROLE().equals(Conf.getComputerRole())){	// 如果被吃的棋子为电脑本身
-				val = -fightVal;
-			}else {
-				val = fightVal;
-			}
-		}
-		return val;
-	}
-	
-	/**
-	 * 棋盘真实的发生变化
-	 * @author:likn1	Feb 22, 2016  2:49:56 PM
-	 * @param beginPosition
-	 * @param endPosition
-	 */
-	public void walkActual(Position beginPosition, Position endPosition, ChessBoard board){
-		walk(beginPosition, endPosition);	// 电脑走棋
-		board.chessRecordes(beginPosition, endPosition);	// 记录棋谱
-	}
-	
+
 	/**
 	 * 行走，一般用于电脑思考时模拟走棋的过程
 	 * @author:likn1	Feb 22, 2016  2:50:13 PM

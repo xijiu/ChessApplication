@@ -4,11 +4,8 @@ import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
-import com.lkn.chess.bean.Position;
 import com.lkn.chess.bean.Role;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,11 +23,13 @@ public class Elephants extends AbstractChessPiece {
 	public Elephants(String id, Role role) {
 		super(id, role);
 		setValues();
-		this.setFightDefaultVal(125);
+		this.setDefaultVal(100);
 		if (role == Role.RED) {    // 先手
 			this.setName("相");
+			this.setShowName("相");
 		} else {
 			this.setName("象");
+			this.setShowName("象");
 		}
 		initNum(role, RED_NUM, BLACK_NUM);
 	}
@@ -46,9 +45,9 @@ public class Elephants extends AbstractChessPiece {
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
+				{  0,  0,-10,  0,  0,  0,-10,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  2,  0,  0,  0,  4,  0,  0,  0,  2},
+				{ -10, 0,  0,  0, 20,  0,  0,  0,  -10},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
 			};
@@ -66,7 +65,9 @@ public class Elephants extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-		return 100 + arr[x][y];
+		int eatenVal = eatenValue(board, position);
+//		int eatenVal = 0;
+		return Math.max(0, defaultVal + arr[x][y] - eatenVal);
 	}
 
 	@Override
@@ -97,12 +98,12 @@ public class Elephants extends AbstractChessPiece {
 	}
 
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece());
+		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		byte[] result = ArrPool.borrow();
 		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
@@ -113,13 +114,16 @@ public class Elephants extends AbstractChessPiece {
 	/**
 	 * 检查4个点，并查看是否堵象眼了
 	 */
-	private void findReachablePositions(int currX, int currY, Map<Integer, AbstractChessPiece> allPiece) {
+	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
 		int tmpX = currX - 2;
 		int tmpY = currY - 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (!hasPiece(allPiece, currX - 1, tmpY - 1)) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(tmpX, tmpY));
+			if (allPiece[currX - 1][currY - 1] == null) {
+				AbstractChessPiece piece = allPiece[tmpX][tmpY];
 				if (piece == null || isEnemy(this, piece)) {
+					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
+				}
+				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -128,9 +132,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX + 2;
 		tmpY = currY + 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (!hasPiece(allPiece, currX + 1, tmpY + 1)) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(tmpX, tmpY));
+			if (allPiece[currX + 1][currY + 1] == null) {
+				AbstractChessPiece piece = allPiece[tmpX][tmpY];
 				if (piece == null || isEnemy(this, piece)) {
+					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
+				}
+				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -139,9 +146,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX - 2;
 		tmpY = currY + 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (!hasPiece(allPiece, currX - 1, tmpY + 1)) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(tmpX, tmpY));
+			if (allPiece[currX - 1][currY + 1] == null) {
+				AbstractChessPiece piece = allPiece[tmpX][tmpY];
 				if (piece == null || isEnemy(this, piece)) {
+					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
+				}
+				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -151,9 +161,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX + 2;
 		tmpY = currY - 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (!hasPiece(allPiece, currX + 1, tmpY - 1)) {
-				AbstractChessPiece piece = allPiece.get(ChessTools.toPosition(tmpX, tmpY));
+			if (allPiece[currX + 1][currY - 1] == null) {
+				AbstractChessPiece piece = allPiece[tmpX][tmpY];
 				if (piece == null || isEnemy(this, piece)) {
+					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
+				}
+				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -166,62 +179,6 @@ public class Elephants extends AbstractChessPiece {
 		} else {
 			return x >= 5;
 		}
-	}
-
-
-	/**
-	 * 象可走的点为7个
-	 * 只有两个点的x、y坐标分别相减的绝对值等于2时，才为可达点
-	 */
-	@Override
-	public Map<String, Position> getReachablePositions(ChessBoard board) {
-		Map<String, Position> reachableMap = new HashMap<String, Position>();
-		Map<String, Position> allMap = board.getPositionMap();
-		Map<String, Position> cloudWalkMap = new HashMap<String, Position>();
-		if(this.getPLAYER_ROLE().equals(Role.RED)){	// 先手情况
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(2, 0)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(6, 0)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(0, 2)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(4, 2)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(8, 2)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(2, 4)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(6, 4)), cloudWalkMap);
-		}else if(this.getPLAYER_ROLE().equals(Role.BLACK)){	// 后手情况
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(2, 9)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(6, 9)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(0, 7)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(4, 7)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(8, 7)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(2, 5)), cloudWalkMap);
-			ChessTools.putPositionToMap(allMap.get(ChessTools.getPositionID(6, 5)), cloudWalkMap);
-		}
-		Integer currX = this.getCurrPosition().getX();
-		Integer currY = this.getCurrPosition().getY();
-		Collection<Position> collection = cloudWalkMap.values();
-		for (Position position : collection) {
-			Integer x = position.getX();
-			Integer y = position.getY();
-			if(Math.abs(currX - x) == 2 && Math.abs(currY - y) == 2){
-				int eyeX = currX > x ? (x + 1) : (currX + 1);
-				int eyeY = currY > y ? (y + 1) : (currY + 1);
-				Position eyePosition = allMap.get(ChessTools.getPositionID(eyeX, eyeY));
-				if(!eyePosition.isExistPiece()){	// 如果象眼不存在棋子的话，那么此位置可达
-					ChessTools.putPositionToMap(position, reachableMap);
-				}
-				
-			}
-		}
-		return reachableMap;
-	}
-
-	@Override
-	public String chessRecordes(Position begin, Position end, ChessBoard board) {
-		return chessRecordesCurved(begin, end, board);
-	}
-
-	@Override
-	public Position walkRecorde(ChessBoard board, String third, String forth) {
-		return walkRecordeCurved(board, third, forth);
 	}
 
 }
