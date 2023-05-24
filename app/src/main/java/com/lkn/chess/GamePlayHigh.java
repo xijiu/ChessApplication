@@ -118,10 +118,10 @@ public class GamePlayHigh {
                 for (int i = 1; i <= size; i++) {
                     COUNT++;
                     byte targetPos = reachablePositions[i];
-                    if (level == 1 && sourcePos == 75 && targetPos == 5) {
+                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
                         valid = true;
                     }
-                    if (level == 2 && sourcePos == 4 && targetPos == 5) {
+                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
                         valid1 = true;
                     }
                     AbstractChessPiece eatenPiece = chessBoard.walk(sourcePos, targetPos);
@@ -170,10 +170,10 @@ public class GamePlayHigh {
 
                     chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
                     boolean pruning = needPruning(role, parentVal, value);
-                    if (level == 1 && sourcePos == 75 && targetPos == 5) {
+                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
                         valid = false;
                     }
-                    if (level == 2 && sourcePos == 4 && targetPos == 5) {
+                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
                         valid1 = false;
                     }
                     if (pruning) {

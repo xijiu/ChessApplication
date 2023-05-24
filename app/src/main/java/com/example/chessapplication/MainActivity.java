@@ -7,8 +7,10 @@ import android.content.res.AssetManager;
 import android.graphics.Point;
 import android.os.PowerManager;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,6 +30,10 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("InvalidWakeLockTag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+//        Window window = getWindow();
+//        window.setGravity(Gravity.TOP);
+//        window.setBackgroundDrawableResource(R.drawable.board);
+//        getWindow().setBackgroundDrawableResource(R.drawable.background1);
         readManual();
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);

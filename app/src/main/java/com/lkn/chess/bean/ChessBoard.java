@@ -12,12 +12,10 @@ import com.lkn.chess.bean.chess_piece.Mandarins;
 import com.lkn.chess.bean.chess_piece.Pawns;
 import com.lkn.chess.bean.chess_piece.Rooks;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -204,38 +202,51 @@ public class ChessBoard {
 	}
 
 	private void initForTest() {
+		putPiece(0, new Rooks(Role.RED));
+		putPiece(1, new Horse(Role.RED));
 		putPiece(2, new Elephants(Role.RED));
 		putPiece(3, new Mandarins(Role.RED));
 		putPiece(4, new King(Role.RED));
 		putPiece(5, new Mandarins(Role.RED));
 		putPiece(6, new Elephants(Role.RED));
+		putPiece(7, new Rooks(Role.RED));
 
-		putPiece(20, new Horse(Role.RED));
+
+		putPiece(21, new Cannons(Role.RED));
 		putPiece(24, new Cannons(Role.RED));
+		putPiece(26, new Horse(Role.RED));
 
-		putPiece(30, new Cannons(Role.BLACK));
+
+		putPiece(30, new Pawns(Role.RED));
+		putPiece(32, new Pawns(Role.RED));
 		putPiece(34, new Pawns(Role.RED));
-		putPiece(36, new Horse(Role.RED));
+		putPiece(36, new Pawns(Role.RED));
 		putPiece(38, new Pawns(Role.RED));
 
-		putPiece(42, new Pawns(Role.RED));
 
-		putPiece(54, new Cannons(Role.RED));
+		// --------------------------以下是后手的旗子----------------------------
+
 
 		putPiece(60, new Pawns(Role.BLACK));
+		putPiece(62, new Pawns(Role.BLACK));
+		putPiece(64, new Pawns(Role.BLACK));
+		putPiece(66, new Pawns(Role.BLACK));
 		putPiece(68, new Pawns(Role.BLACK));
 
-		putPiece(72, new Rooks(Role.RED));
-		putPiece(74, new Elephants(Role.BLACK));
-		putPiece(75, new Rooks(Role.BLACK));
+
+		putPiece(74, new Cannons(Role.BLACK));
 		putPiece(77, new Cannons(Role.BLACK));
 		putPiece(78, new Horse(Role.BLACK));
 
-		putPiece(84, new Mandarins(Role.BLACK));
 
+		putPiece(90, new Rooks(Role.BLACK));
+		putPiece(91, new Horse(Role.BLACK));
+		putPiece(92, new Elephants(Role.BLACK));
 		putPiece(93, new Mandarins(Role.BLACK));
 		putPiece(94, new King(Role.BLACK));
+		putPiece(95, new Mandarins(Role.BLACK));
 		putPiece(96, new Elephants(Role.BLACK));
+		putPiece(97, new Rooks(Role.BLACK));
 	}
 
 	private void initBoard() {

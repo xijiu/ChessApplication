@@ -3,13 +3,17 @@ package com.lkn.chess.android;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
-import android.graphics.EmbossMaskFilter;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
 import android.graphics.PathEffect;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.AudioManager;
@@ -17,6 +21,7 @@ import android.media.SoundPool;
 import android.os.AsyncTask;
 import android.view.MotionEvent;
 import android.view.View;
+import com.example.chessapplication.R;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.Conf;
 import com.lkn.chess.GamePlayHigh;
@@ -26,11 +31,11 @@ import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 
 public class GameView extends View {
 
-	private final int startX ;
-	private final int startY ;
+	private int startX ;
+	private int startY ;
 	private final int LINE_NUM = 10;	// 中国象棋的棋盘共10行
 	private final int COLUMN_NUM = 9;	// 中国象棋的棋盘共9列
-	private final int GRID_WIDTH = GlobalData.getWidth() / (COLUMN_NUM);	// 格子的长宽度
+	private int GRID_WIDTH = GlobalData.getWidth() / (COLUMN_NUM);	// 格子的长宽度
 	private Paint paint = null;
 	private Context context;
 	private SoundPool soundPool;
@@ -45,6 +50,9 @@ public class GameView extends View {
 	private int lastWalkBegin;
 	private int lastWalkEnd;
 	private boolean gameOver = false;
+	private int soundID = 1;
+	private Camera camera;
+	private Matrix matrix;
 
 	public void setPlayerTurn(boolean isPlayerTurn) {
 		this.isPlayerTurn = isPlayerTurn;
@@ -52,24 +60,85 @@ public class GameView extends View {
 
 	public GameView(Context context, ChessBoard board) {
 		super(context);
+		camera = new Camera();
+		matrix = new Matrix();
 		this.context = context;
 		soundPool = new SoundPool(5,AudioManager.STREAM_SYSTEM,5);
-//		soundPool.load(context, 1, 1);
+		soundID = soundPool.load(context, R.raw.go, 1);
 		paint = new Paint();//实例化一个画�?
-		paint.setAntiAlias(true);//设置画笔去锯齿，没有此语句，画的线或图片周围不圆�?
+//		paint.setAntiAlias(false);//设置画笔去锯齿，没有此语句，画的线或图片周围不圆�?
 		this.board = board;
 		
 		cloneBoard = board.clone();
 		// 为了不让棋盘的边界与屏幕的边界完全重合，�?��让棋盘的边界离屏幕边界一定距离�?
-		startX = GRID_WIDTH/2;
-		startY = GRID_WIDTH;
+
+
+
+		int totalWidth = GlobalData.getWidth();
+		int totalHeight = GlobalData.getHeight();
+
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.board);
+		int imgWidth = bitmap.getWidth();
+		int imgHeight = bitmap.getHeight();
+		int imgLeft = 50;
+		int imgTop = 60;
+		int imgGridWidth = 80;
+
+		// x * 8 + x / 8 * 5 * 2 = totalWidth;
+		System.out.println("origin GRID_WIDTH is " + GRID_WIDTH);
+		System.out.println("origin totalWidth is " + totalWidth);
+		GRID_WIDTH = (int) ((float) totalWidth / 9.25f) + 1;
+		System.out.println("after GRID_WIDTH is " + GRID_WIDTH);
+
+
+//		startX = GRID_WIDTH/2;
+//		startY = GRID_WIDTH;
+
+		startX = GRID_WIDTH / 8 * 5;
+		startY = GRID_WIDTH / 8 * 6;
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		canvas.drawColor(0xFFF4E5C2);	//背景颜色
+
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.board);
+
+//		Rect src = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+//		Rect dst = new Rect(0, 0, getWidth(), getHeight());
+
+
+		int boardWidth = bitmap.getWidth();
+		int boardHeight = bitmap.getHeight();
+
+		Rect src = new Rect(0, 0, boardWidth, boardHeight);
+		Rect dst = new Rect(0, 0, getWidth(), getWidth() * boardHeight / boardWidth);
+
+		canvas.drawBitmap(bitmap, src, dst, null);
+
+
+//		canvas.drawColor(0xFFF4E5C2);	//背景颜色
 		paint.setColor(Color.BLACK);	//画笔颜色
+
+//		drawMainLine(canvas);
+//		drawOutsideLine(canvas);	// 为棋盘的外面画线
+//		drawMandarinsLine(canvas);	// 画士的行走路线
+//		paintFourCorner(canvas);
+//		drawChessWord(canvas);	// 画楚河汉界
+		drawChooseButton(canvas);	// 画选择难度的按钮
+		
+		// 使用maskFilter实现棋子的滤镜效果，使之看起来更有立体感�?
+//		float[] dire = new float[]{1,1,1};  //光线方向
+//		float light = 0.5f;   //光线强度
+//		float spe = 6;
+//		float blur = GRID_WIDTH/10;
+//		EmbossMaskFilter emboss = new EmbossMaskFilter(dire, light, spe, blur);
+//		paint.setMaskFilter(emboss);
+		paintPieces(canvas);	// 绘制所有的棋子
+	}
+
+
+	private void drawMainLine(Canvas canvas) {
 		paint.setAntiAlias(true);//锯齿不显示
 		// 画横线
 		for(int i = 0; i < LINE_NUM ; i++) {
@@ -84,20 +153,6 @@ public class GameView extends View {
 				canvas.drawLine(startX+i*GRID_WIDTH, startY+5*GRID_WIDTH, startX+i*GRID_WIDTH , startY+(LINE_NUM-1)*GRID_WIDTH, paint);
 			}
 		}
-		drawOutsideLine(canvas);	// 为棋盘的外面画线
-		drawMandarinsLine(canvas);	// 画士的行走路线
-		paintFourCorner(canvas);
-		drawChessWord(canvas);	// 画楚河汉界
-		drawChooseButton(canvas);	// 画选择难度的按钮
-		
-		//使用maskFilter实现棋子的滤镜效果，使之看起来更有立体感�?
-		float[] dire = new float[]{1,1,1};  //光线方向
-		float light = 0.5f;   //光线强度
-		float spe = 6;
-		float blur = GRID_WIDTH/10;
-		EmbossMaskFilter emboss = new EmbossMaskFilter(dire, light, spe, blur);
-		paint.setMaskFilter(emboss);
-		paintPieces(canvas);	// 绘制所有的棋子
 	}
 
 	/**
@@ -109,30 +164,45 @@ public class GameView extends View {
 		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);  
 		paint.setColor(Color.BLACK);
-		RectF rect = new RectF(startX + 1.25f*GRID_WIDTH, startY+10*GRID_WIDTH, startX + 2.75f*GRID_WIDTH, startY+10.5f*GRID_WIDTH);
-		if(Conf.THINK_DEPTH == 3){paint.setColor(Color.GREEN);}
+		RectF rect = new RectF(startX + 1.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 2.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
+		if(Conf.THINK_DEPTH == 3) {
+			paint.setColor(Color.LTGRAY);
+			paint.setStyle(Paint.Style.FILL);
+		} else {
+			paint.setStyle(Paint.Style.STROKE);
+		}
         canvas.drawRect(rect, paint);
 		
 		Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG); 
 		textPaint.setTextAlign(Paint.Align.CENTER);
-		textPaint.setTextSize(GRID_WIDTH * 2 / 5);
+		textPaint.setTextSize((float) (GRID_WIDTH / 3.5));
 		textPaint.setTypeface(Typeface.SANS_SERIF);
-		FontMetricsInt fontMetrics = textPaint.getFontMetricsInt();  
-	    int baseline = (int)((startY + 10.25*GRID_WIDTH) * 2 - fontMetrics.bottom - fontMetrics.top) / 2;  
-		canvas.drawText("小孩", startX+2*GRID_WIDTH, baseline, textPaint);
-		
+		FontMetricsInt fontMetrics = textPaint.getFontMetricsInt();
+	    int baseline = (int)((startY + 11.25*GRID_WIDTH) * 2 - fontMetrics.bottom - fontMetrics.top) / 2;
+		canvas.drawText("熊孩子", startX+2*GRID_WIDTH, baseline, textPaint);
+
 		/****************************************************************************************************************************************/
-		RectF rect2 = new RectF(startX + 3.25f*GRID_WIDTH, startY+10*GRID_WIDTH, startX + 4.75f*GRID_WIDTH, startY+10.5f*GRID_WIDTH);
+		RectF rect2 = new RectF(startX + 3.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 4.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
 		paint.setColor(Color.BLACK);
-        if(Conf.THINK_DEPTH == 4){paint.setColor(Color.GREEN);}
+        if(Conf.THINK_DEPTH == 4) {
+        	paint.setColor(Color.LTGRAY);
+			paint.setStyle(Paint.Style.FILL);
+        } else {
+			paint.setStyle(Paint.Style.STROKE);
+		}
 		canvas.drawRect(rect2, paint);
-        canvas.drawText("大叔", startX+4*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("秃头大叔", startX+4*GRID_WIDTH, baseline, textPaint);
 		/****************************************************************************************************************************************/
-        RectF rect3 = new RectF(startX + 5.25f*GRID_WIDTH, startY+10*GRID_WIDTH, startX + 6.75f*GRID_WIDTH, startY+10.5f*GRID_WIDTH);
+        RectF rect3 = new RectF(startX + 5.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 6.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
         paint.setColor(Color.BLACK);
-        if(Conf.THINK_DEPTH == 5){paint.setColor(Color.GREEN);}
+        if(Conf.THINK_DEPTH == 5){
+        	paint.setColor(Color.LTGRAY);
+			paint.setStyle(Paint.Style.FILL);
+		} else {
+			paint.setStyle(Paint.Style.STROKE);
+		}
         canvas.drawRect(rect3, paint);
-        canvas.drawText("老头", startX+6*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("公园老头", startX+6*GRID_WIDTH, baseline, textPaint);
 	}
 	/**
 	 * 画楚河汉界四个汉字
@@ -213,7 +283,7 @@ public class GameView extends View {
 	private void paintForSinglePoint(int x, int y, Canvas canvas){
 		int size = 4;
 		int len = GRID_WIDTH / 4;
-		if(x - size > startX){
+		if (x - size > startX) {
 			// 左上角
 			canvas.drawLine(x - size, y - size, x - size, y - size - len, paint);
 			canvas.drawLine(x - size, y - size, x - size - len, y - size, paint);
@@ -268,11 +338,11 @@ public class GameView extends View {
 		
 		if((touchX < startX - GRID_WIDTH/2) || (touchX > startX+(COLUMN_NUM-1)*GRID_WIDTH + GRID_WIDTH/2) || (touchY < startY - GRID_WIDTH/2) || (touchY > startY + (LINE_NUM-1)*GRID_WIDTH + GRID_WIDTH/2)) {	//点击到棋盘以外的位置
 			int changeDepth = -1;
-			if(touchX >= (startX + 1.25f*GRID_WIDTH) && touchX <= (startX + 2.75f*GRID_WIDTH) && touchY >= (startY+10*GRID_WIDTH) && touchY <= (startY+10.5f*GRID_WIDTH)){	// 小白级
+			if(touchX >= (startX + 1.25f*GRID_WIDTH) && touchX <= (startX + 2.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){	// 小白级
 				changeDepth = 3;
-			} else if(touchX >= (startX + 3.25f*GRID_WIDTH) && touchX <= (startX + 4.75f*GRID_WIDTH) && touchY >= (startY+10*GRID_WIDTH) && touchY <= (startY+10.5f*GRID_WIDTH)){
+			} else if(touchX >= (startX + 3.25f*GRID_WIDTH) && touchX <= (startX + 4.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){
 				changeDepth = 4;
-			} else if(touchX >= (startX + 5.25f*GRID_WIDTH) && touchX <= (startX + 6.75f*GRID_WIDTH) && touchY >= (startY+10*GRID_WIDTH) && touchY <= (startY+10.5f*GRID_WIDTH)){
+			} else if(touchX >= (startX + 5.25f*GRID_WIDTH) && touchX <= (startX + 6.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){
 				changeDepth = 5;
 			}
 			if(changeDepth != -1){
@@ -300,7 +370,7 @@ public class GameView extends View {
 			int pressPosition = ChessTools.toPosition(boardX, boardY);
 
 			if (pressPiece == null) {
-				soundPool.play(1,1, 1, 0, 0, 1);
+				soundPool.play(soundID,1, 1, 0, 0, 1);
 				firstPressPiece(pressPosition);	// 第一次按下某个棋子时
 			} else {
 				byte[] reachablePositions = pressPiece.getReachablePositions(pressPiecePosition, board, false);
@@ -318,14 +388,14 @@ public class GameView extends View {
 					board.walk(pressPiecePosition, pressPosition);
 					lastWalkBegin = pressPiecePosition;
 					lastWalkEnd = pressPosition;
-					soundPool.play(1,1, 1, 0, 0, 1);//播放下棋声音
+					soundPool.play(soundID,1, 1, 0, 0, 1);//播放下棋声音
 					judgeGameOver();	// 判断游戏是否结束
 					isPlayerTurn = false;
 					isComputerTurn = true;
 					pressPiece = null;
 					cloneBoard = board.clone();
 				} else {	// 按照第一次按下某个棋子执行
-					soundPool.play(1,1, 1, 0, 0, 1);
+					soundPool.play(soundID,1, 1, 0, 0, 1);
 					firstPressPiece(pressPosition);	// 第一次按下某个棋子时
 				}
 			}
@@ -412,7 +482,7 @@ public class GameView extends View {
 			int[] walkPath = play.computerWalk(board);
 			lastWalkBegin = walkPath[0];
 			lastWalkEnd = walkPath[1];
-			soundPool.play(1,1, 1, 0, 0, 1);//播放下棋声音
+			soundPool.play(soundID,1, 1, 0, 0, 1);//播放下棋声音
 			cloneBoard = board.clone();
 			return null;
 		}
@@ -471,6 +541,7 @@ public class GameView extends View {
 		} else {
 			textPaint.setColor(Color.BLACK);
 		}
+		textPaint.setTypeface(Typeface.MONOSPACE);
 
 		// 设置棋子背景颜色
 		if (pressPiece != null && pressPiecePosition == ChessTools.toPosition(9 - x, y)) {
@@ -479,7 +550,24 @@ public class GameView extends View {
 			paint.setColor(Color.rgb(209, 208, 235));
 		}
 
+		paint.setStyle(Paint.Style.FILL);
+		paint.setAntiAlias(true);
+//		paint.setColor(Color.WHITE);
+//		paint.setColor(Color.rgb(209, 208, 235));
 		canvas.drawCircle(startX + y * GRID_WIDTH, startY + x * GRID_WIDTH, GRID_WIDTH/2 - 3, paint);
+
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setStrokeWidth(1.5f);
+		paint.setAntiAlias(true);
+		paint.setColor(piece.isRed() ? Color.RED : Color.BLACK);
+		canvas.drawCircle(startX + y * GRID_WIDTH, startY + x * GRID_WIDTH, GRID_WIDTH/2 - 3, paint);
+
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setStrokeWidth(3.5f);
+		paint.setAntiAlias(true);
+		paint.setColor(piece.isRed() ? Color.RED : Color.BLACK);
+		canvas.drawCircle(startX + y * GRID_WIDTH, startY + x * GRID_WIDTH, GRID_WIDTH/2 - 3 - 8, paint);
+
 		
 		FontMetricsInt fontMetrics = textPaint.getFontMetricsInt();  
 	    int baseline = (startY + x * GRID_WIDTH + startY + x * GRID_WIDTH - fontMetrics.bottom - fontMetrics.top) / 2;
