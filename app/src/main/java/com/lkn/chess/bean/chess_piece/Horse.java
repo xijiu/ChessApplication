@@ -1,6 +1,7 @@
 package com.lkn.chess.bean.chess_piece;
 
 import com.lkn.chess.ChessTools;
+import com.lkn.chess.Conf;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
@@ -24,7 +25,7 @@ public class Horse extends AbstractChessPiece {
 	public Horse(String id, Role role) {
 		super(id, role);
 		setValues();
-		this.setDefaultVal(270);
+		this.setDefaultVal(220);
 		this.setName("马");
 		this.setShowName("馬");
 		initNum(role, RED_NUM, BLACK_NUM);
@@ -181,12 +182,12 @@ public class Horse extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-
-		byte num = getReachablePositions(position, board, false, 10)[0];
-
+		if (Conf.SIMPLE_VALUE) {
+			return defaultVal + arr[x][y];
+		}
+		byte num = getReachablePositions(position, board, true, 10)[0];
 		int eatenVal = eatenValue(board, position);
-//		int eatenVal = 0;
-		return Math.max(0, 250 + arr[x][y] + num * 5 - eatenVal);
+		return Math.max(0, defaultVal + arr[x][y] + num * 10 - eatenVal);
 	}
 
 

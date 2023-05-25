@@ -331,15 +331,11 @@ public class ChessBoard {
 	 * 悔棋，walk的逆过程
 	 */
 	public void unWalk(int sourcePosition, int targetPosition, AbstractChessPiece eatenPiece) {
-//		if (1 == 1) {
-//			return;
-//		}
 		AbstractChessPiece piece = ChessTools.getPiece(allPiece, targetPosition);
 		changePiecePosition(piece, targetPosition, sourcePosition);
 		if (eatenPiece != null) {
 			addPiece(eatenPiece, targetPosition);
 		}
-
 	}
 
 	/**

@@ -49,14 +49,13 @@ public class GamePlayHigh {
                 think(chessBoard, Role.BLACK, 1, Integer.MAX_VALUE);
             }
 
-            System.out.println("----------begin-------");
-            System.out.println(sb);
-            System.out.println("----------end-------");
-
-
-            System.out.println("----------begin1-------");
-            System.out.println(sb1);
-            System.out.println("----------end1-------");
+//            System.out.println("----------begin-------");
+//            System.out.println(sb);
+//            System.out.println("----------end-------");
+//
+//            System.out.println("----------begin1-------");
+//            System.out.println(sb1);
+//            System.out.println("----------end1-------");
 
 
             List<Integer> list = new ArrayList<>(posMap.keySet());
@@ -71,7 +70,6 @@ public class GamePlayHigh {
         chessBoard.walk(from, to);
         System.out.println("考虑情况 " + COUNT + ", time cost " + (System.currentTimeMillis() - begin));
 //        printBestPath();
-        System.out.println("cccccccccc " + SOURCE_POS);
         return new int[]{from, to};
     }
 
@@ -121,12 +119,12 @@ public class GamePlayHigh {
                 for (int i = 1; i <= size; i++) {
                     COUNT++;
                     byte targetPos = reachablePositions[i];
-                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
-                        valid = true;
-                    }
-                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
-                        valid1 = true;
-                    }
+//                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
+//                        valid = true;
+//                    }
+//                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
+//                        valid1 = true;
+//                    }
                     AbstractChessPiece eatenPiece = chessBoard.walk(sourcePos, targetPos);
                     boolean isKingEaten = isKingEaten(eatenPiece);
                     Role nextRole = role.nextRole();
@@ -163,22 +161,22 @@ public class GamePlayHigh {
                         finalVal = Math.max(value, finalVal);
                     }
 
-                    if (valid && level == 2) {
-                        sb.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
-                    }
-
-                    if (valid1 && level == 3) {
-                        sb1.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
-                    }
+//                    if (valid && level == 2) {
+//                        sb.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
+//                    }
+//
+//                    if (valid1 && level == 3) {
+//                        sb1.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
+//                    }
 
                     chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
                     boolean pruning = needPruning(role, parentVal, value);
-                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
-                        valid = false;
-                    }
-                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
-                        valid1 = false;
-                    }
+//                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
+//                        valid = false;
+//                    }
+//                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
+//                        valid1 = false;
+//                    }
                     if (pruning) {
                         return role == Role.RED ? Conf.GAME_PLAY_MIN_VAL : Conf.GAME_PLAY_MAX_VAL;
                     }

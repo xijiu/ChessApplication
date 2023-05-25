@@ -1,13 +1,18 @@
 package com.lkn.chess;
 
 import com.lkn.chess.bean.ChessBoard;
+import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 
 import java.util.Scanner;
 
 public class Test {
 	
 	public static void main(String[] args) {
-		new Test().personWalk();
+//		new Test().personWalk();
+		ChessBoard board = new ChessBoard();
+		AbstractChessPiece[][] allPiece = board.getAllPiece();
+
+		System.out.println(allPiece[0][1].valuation(board, 1));
 	}
 
 	private void personWalk() {

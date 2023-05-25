@@ -1,6 +1,7 @@
 package com.lkn.chess.bean.chess_piece;
 
 import com.lkn.chess.ChessTools;
+import com.lkn.chess.Conf;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Position;
@@ -114,20 +115,21 @@ public abstract class AbstractChessPiece implements Cloneable {
 	 * 		卒
 	 */
 	protected int eatenValue(ChessBoard board, int currPosition) {
+		Role nextRole = Conf.THINK_DEPTH % 2 == 1 ? Role.RED : Role.BLACK;
+		if (this.getPLAYER_ROLE() == nextRole) {
+			return 0;
+		}
 		int[] redValArr = board.getRedNextStepPositionArr()[currPosition];
 		int[] blackValArr = board.getBlackNextStepPositionArr()[currPosition];
 
 		int[] ownValArr = isRed() ? redValArr : blackValArr;
 		int[] enemyValArr = isRed() ? blackValArr : redValArr;
-		if (enemyValArr[0] == 0) {
-			return 0;
-		} else {
-			int ownLength = ownValArr[0];
-			int enemyLength = enemyValArr[0];
-			Arrays.sort(ownValArr, 1, ownLength + 1);
-			Arrays.sort(enemyValArr, 1, enemyLength + 1);
-			return calcEatenValue(ownValArr, enemyValArr);
-		}
+
+		int ownLength = ownValArr[0];
+		int enemyLength = enemyValArr[0];
+		Arrays.sort(ownValArr, 1, ownLength + 1);
+		Arrays.sort(enemyValArr, 1, enemyLength + 1);
+		return calcEatenValue(ownValArr, enemyValArr);
 	}
 
 	private int calcEatenValue(int[] ownValArr, int[] enemyValArr) {
@@ -266,21 +268,21 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return x >= 0 && x < 10 && y >= 0 && y < 9;
 	}
 
-	protected int findKingPositionByName(AbstractChessPiece[][] allPiece, boolean isRed) {
-		if (isRed) {
-			for (int x = 0; x <= 2; x++) {
+	protected int findKingPositionByName(AbstractChessPiece[][] allPiece) {
+		if (isRed()) {
+			for (int x = 7; x <= 9; x++) {
 				for (int y = 3; y <= 5; y++) {
 					AbstractChessPiece piece = allPiece[x][y];
-					if (piece != null && piece.type() == 5) {
+					if (piece != null && piece.type() == 12) {
 						return ChessTools.toPosition(x, y);
 					}
 				}
 			}
 		} else {
-			for (int x = 7; x <= 9; x++) {
+			for (int x = 0; x <= 2; x++) {
 				for (int y = 3; y <= 5; y++) {
 					AbstractChessPiece piece = allPiece[x][y];
-					if (piece != null && piece.type() == 12) {
+					if (piece != null && piece.type() == 5) {
 						return ChessTools.toPosition(x, y);
 					}
 				}

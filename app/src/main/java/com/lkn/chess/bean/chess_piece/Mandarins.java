@@ -1,6 +1,7 @@
 package com.lkn.chess.bean.chess_piece;
 
 import com.lkn.chess.ChessTools;
+import com.lkn.chess.Conf;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
@@ -64,8 +65,10 @@ public class Mandarins extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
+		if (Conf.SIMPLE_VALUE) {
+			return defaultVal + arr[x][y];
+		}
 		int eatenVal = eatenValue(board, position);
-//		int eatenVal = 0;
 		return Math.max(0, defaultVal + arr[x][y] - eatenVal);
 	}
 

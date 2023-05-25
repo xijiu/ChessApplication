@@ -1,6 +1,7 @@
 package com.lkn.chess.bean.chess_piece;
 
 import com.lkn.chess.ChessTools;
+import com.lkn.chess.Conf;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
@@ -12,8 +13,6 @@ import com.lkn.chess.bean.Role;
 public class Cannons extends AbstractChessPiece {
 	public static final int RED_NUM = 6;
 	public static final int BLACK_NUM = 9;
-	public static final int BASE_VAL = 280;
-
 
 	public Cannons(Role role) {
 		this(null, role);
@@ -21,7 +20,7 @@ public class Cannons extends AbstractChessPiece {
 	
 	public Cannons(String id, Role role) {
 		super(id, role);
-		this.setDefaultVal(BASE_VAL);
+		this.setDefaultVal(240);
 		setValues();
 		this.setName("炮");
 		this.setShowName("炮");
@@ -37,11 +36,11 @@ public class Cannons extends AbstractChessPiece {
 				{  6,  4,  0,  0,  0,  0,  0,  4,  6},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0, 10,  0,  0,  0,  0},
+				{  0,  0,  0,  0, 20,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  6,  6, 10,  6,  6,  0,  0},
+				{  4,  0,  6,  6, 20,  6,  6,  0,  4},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
 			};
@@ -70,52 +69,57 @@ public class Cannons extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
+		if (Conf.SIMPLE_VALUE) {
+			return defaultVal + arr[x][y];
+		}
 		int hollowVal = calcHollow(x, y, board.getAllPiece());
 		int eatenVal = eatenValue(board, position);
-//		int eatenVal = 0;
-		return Math.max(0, BASE_VAL + hollowVal + arr[x][y] - eatenVal);
+		return Math.max(0, defaultVal + hollowVal + arr[x][y] - eatenVal);
 	}
 
 	/**
 	 * 计算是否存在空心炮，以及其威力
 	 */
 	private int calcHollow(int currX, int currY, AbstractChessPiece[][] allPiece) {
-		int targetPos = findKingPositionByName(allPiece, isRed());
+		int targetPos = findKingPositionByName(allPiece);
 		int targetX = ChessTools.fetchX(targetPos);
 		int targetY = ChessTools.fetchY(targetPos);
-		if (isRed()) {
-			if (targetY == currY) {
-				int beginX = Math.min(targetX, currX);
-				int endX = Math.max(targetX, currX);
-				for (int x = beginX + 1; x < endX; x++) {
-					AbstractChessPiece piece = allPiece[x][currY];
-					if (piece != null) {
-						return 0;
-					}
+
+		if (targetY == currY) {
+			int beginX = Math.min(targetX, currX);
+			int endX = Math.max(targetX, currX);
+			for (int x = beginX + 1; x < endX; x++) {
+				AbstractChessPiece piece = allPiece[x][currY];
+				if (piece != null) {
+					return 0;
 				}
-				int abs = Math.abs(targetX - currX);
-				if (abs >= 2) {
-					return 150 + 10 * abs;
-				}
-				return 0;
 			}
-			if (targetX == currX) {
-				int beginY = Math.min(targetY, currY);
-				int endY = Math.max(targetY, currY);
-				for (int y = beginY + 1; y < endY; y++) {
-					AbstractChessPiece piece = allPiece[currX][y];
-					if (piece != null) {
-						return 0;
-					}
-				}
-				int abs = Math.abs(targetY - currY);
-				if (abs >= 2) {
-					return 150 + 10 * abs;
-				}
-				return 0;
+			int abs = Math.abs(targetX - currX);
+			if (abs >= 2) {
+				return calcHollowValue(abs);
 			}
+			return 0;
+		}
+		if (targetX == currX) {
+			int beginY = Math.min(targetY, currY);
+			int endY = Math.max(targetY, currY);
+			for (int y = beginY + 1; y < endY; y++) {
+				AbstractChessPiece piece = allPiece[currX][y];
+				if (piece != null) {
+					return 0;
+				}
+			}
+			int abs = Math.abs(targetY - currY);
+			if (abs >= 2) {
+				return calcHollowValue(abs);
+			}
+			return 0;
 		}
 		return 0;
+	}
+
+	private int calcHollowValue(int gap) {
+		return 180 + 20 * gap;
 	}
 
 	@Override
@@ -140,141 +144,6 @@ public class Cannons extends AbstractChessPiece {
 		return (byte) (isRed() ? 6 : 13);
 	}
 
-//	@Override
-//	public boolean canEat(ChessBoard board, int currPos, int targetPos) {
-//		Map<Integer, AbstractChessPiece> allPiece = board.getAllPiece();
-//		int currX = ChessTools.fetchX(currPos);
-//		int currY = ChessTools.fetchY(currPos);
-//		int targetX = ChessTools.fetchX(targetPos);
-//		int targetY = ChessTools.fetchY(targetPos);
-//		if (currX == targetX) {
-//			int minY = Math.min(currY, targetY);
-//			int maxY = Math.max(currY, targetY);
-//			int num = 0;
-//			for (int y = minY + 1; y < maxY; y++) {
-//				if (allPiece.containsKey(ChessTools.toPosition(currX, y))) {
-//					num++;
-//				}
-//				if (num > 1) {
-//					return false;
-//				}
-//			}
-//			if (num == 1) {
-//				return true;
-//			}
-//		}
-//
-//		if (currY == targetY) {
-//			int minX = Math.min(currX, targetX);
-//			int maxX = Math.max(currX, targetX);
-//			int num = 0;
-//			for (int x = minX + 1; x < maxX; x++) {
-//				if (allPiece.containsKey(ChessTools.toPosition(x, currY))) {
-//					num++;
-//				}
-//				if (num > 1) {
-//					return false;
-//				}
-//			}
-//			return num == 1;
-//		}
-//
-//		return false;
-//	}
-
-
-	/**
-	 * 吃子儿的情况
-	 */
-	private void addEatCase(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
-		boolean hasRack = false;
-		AbstractChessPiece piece = null;
-		// 向上找
-		for (int x = currX + 1; x < 10; x++) {
-			int position = ChessTools.toPosition(x, currY);
-			if ((piece = allPiece[x][currY]) != null) {
-				if (hasRack) {
-					if (isEnemy(this, piece)) {
-						recordReachablePosition(position);
-					} else {
-						if (containsProtectedPiece) {
-							recordReachablePosition(position);
-						}
-					}
-					break;
-				} else {
-					hasRack = true;
-				}
-			}
-		}
-
-		// 向下找
-		hasRack = false;
-		piece = null;
-		for (int x = currX - 1; x >= 0; x--) {
-			int position = ChessTools.toPosition(x, currY);
-			if ((piece = allPiece[x][currY]) != null) {
-				if (hasRack) {
-					if (isEnemy(this, piece)) {
-						recordReachablePosition(position);
-					} else {
-						if (containsProtectedPiece) {
-							recordReachablePosition(position);
-						}
-					}
-					break;
-				} else {
-					hasRack = true;
-				}
-			}
-		}
-
-		// 向右找
-		hasRack = false;
-		piece = null;
-		for (int y = currY + 1; y < 9; y++) {
-			int position = ChessTools.toPosition(currX, y);
-			if ((piece = allPiece[currX][y]) != null) {
-				if (hasRack) {
-					if (isEnemy(this, piece)) {
-						recordReachablePosition(position);
-					} else {
-						if (containsProtectedPiece) {
-							recordReachablePosition(position);
-						}
-					}
-					break;
-				} else {
-					hasRack = true;
-				}
-			}
-		}
-
-		// 向左找
-		hasRack = false;
-		piece = null;
-		for (int y = currY - 1; y >= 0; y--) {
-			int position = ChessTools.toPosition(currX, y);
-			if ((piece = allPiece[currX][y]) != null) {
-				if (hasRack) {
-					if (isEnemy(this, piece)) {
-						recordReachablePosition(position);
-					} else {
-						if (containsProtectedPiece) {
-							recordReachablePosition(position);
-						}
-					}
-					break;
-				} else {
-					hasRack = true;
-				}
-			}
-		}
-	}
-
-	/**
-	 * 不吃子儿的情况
-	 */
 	private void addAllCase(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
 		boolean hasRack = false;
 		// 向上找
