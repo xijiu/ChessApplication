@@ -1,6 +1,5 @@
 package com.lkn.chess.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
@@ -50,18 +49,17 @@ public class Cannons extends AbstractChessPiece {
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
 	}
 
+
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece, int level) {
+		reachablePositions = reachableHelper[level];
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		addNotEatCase(currX, currY, board.getAllPiece());
-		addEatCase(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		addAllCase(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
+		return reachablePositions;
 	}
 
 	/**
@@ -277,41 +275,104 @@ public class Cannons extends AbstractChessPiece {
 	/**
 	 * 不吃子儿的情况
 	 */
-	private void addNotEatCase(int currX, int currY, AbstractChessPiece[][] allPiece) {
+	private void addAllCase(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+		boolean hasRack = false;
 		// 向上找
 		for (int x = currX + 1; x < 10; x++) {
 			int position = ChessTools.toPosition(x, currY);
-			if (allPiece[x][currY] == null) {
-				recordReachablePosition(position);
+			if (hasRack) {
+				AbstractChessPiece piece = allPiece[x][currY];
+				if (piece != null) {
+					if (isEnemy(this, piece)) {
+						recordReachablePosition(position);
+					} else {
+						if (containsProtectedPiece) {
+							recordReachablePosition(position);
+						}
+					}
+					break;
+				}
 			} else {
-				break;
+				if (allPiece[x][currY] == null) {
+					recordReachablePosition(position);
+				} else {
+					hasRack = true;
+				}
 			}
 		}
+
 		// 向下找
+		hasRack = false;
 		for (int x = currX - 1; x >= 0; x--) {
 			int position = ChessTools.toPosition(x, currY);
-			if (allPiece[x][currY] == null) {
-				recordReachablePosition(position);
+			if (hasRack) {
+				AbstractChessPiece piece = allPiece[x][currY];
+				if (piece != null) {
+					if (isEnemy(this, piece)) {
+						recordReachablePosition(position);
+					} else {
+						if (containsProtectedPiece) {
+							recordReachablePosition(position);
+						}
+					}
+					break;
+				}
 			} else {
-				break;
+				if (allPiece[x][currY] == null) {
+					recordReachablePosition(position);
+				} else {
+					hasRack = true;
+				}
 			}
 		}
+
 		// 向右找
+		hasRack = false;
 		for (int y = currY + 1; y < 9; y++) {
 			int position = ChessTools.toPosition(currX, y);
-			if (allPiece[currX][y] == null) {
-				recordReachablePosition(position);
+			if (hasRack) {
+				AbstractChessPiece piece = allPiece[currX][y];
+				if (piece != null) {
+					if (isEnemy(this, piece)) {
+						recordReachablePosition(position);
+					} else {
+						if (containsProtectedPiece) {
+							recordReachablePosition(position);
+						}
+					}
+					break;
+				}
 			} else {
-				break;
+				if (allPiece[currX][y] == null) {
+					recordReachablePosition(position);
+				} else {
+					hasRack = true;
+				}
 			}
 		}
+
 		// 向左找
+		hasRack = false;
 		for (int y = currY - 1; y >= 0; y--) {
 			int position = ChessTools.toPosition(currX, y);
-			if (allPiece[currX][y] == null) {
-				recordReachablePosition(position);
+			if (hasRack) {
+				AbstractChessPiece piece = allPiece[currX][y];
+				if (piece != null) {
+					if (isEnemy(this, piece)) {
+						recordReachablePosition(position);
+					} else {
+						if (containsProtectedPiece) {
+							recordReachablePosition(position);
+						}
+					}
+					break;
+				}
 			} else {
-				break;
+				if (allPiece[currX][y] == null) {
+					recordReachablePosition(position);
+				} else {
+					hasRack = true;
+				}
 			}
 		}
 	}

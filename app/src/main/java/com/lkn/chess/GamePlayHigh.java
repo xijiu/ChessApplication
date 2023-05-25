@@ -43,7 +43,7 @@ public class GamePlayHigh {
             from = PubTools.uncompressBegin(multiPos);
             to = PubTools.uncompressEnd(multiPos);
         } else {
-            for (int i = Conf.THINK_DEPTH; i <= Conf.THINK_DEPTH; i++) {
+            for (int i = 2; i <= Conf.THINK_DEPTH; i++) {
                 TMP_THINK_DEPTH = i;
                 posMap.clear();
                 think(chessBoard, Role.BLACK, 1, Integer.MAX_VALUE);
@@ -97,6 +97,7 @@ public class GamePlayHigh {
         int finalVal = role == Role.RED ? Integer.MAX_VALUE : Integer.MIN_VALUE;
         AbstractChessPiece[][] pieceArr = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
         int firstPos = sortPieceMap(pieceArr, level);
+        int firstPosTmp = firstPos;
         for (int x = 0; x < pieceArr.length; x++) {
             for (int y = 0; y < pieceArr[x].length; y++) {
                 int sourcePos = ChessTools.toPosition(x, y);
@@ -110,9 +111,11 @@ public class GamePlayHigh {
                 if (piece == null) {
                     continue;
                 }
+                if (firstPosTmp == sourcePos && y != -1) {
+                    continue;
+                }
 
-
-                byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false);
+                byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false, level);
                 exchangeBestPositionToFirst(reachablePositions, level);
                 byte size = reachablePositions[0];
                 for (int i = 1; i <= size; i++) {
@@ -180,7 +183,6 @@ public class GamePlayHigh {
                         return role == Role.RED ? Conf.GAME_PLAY_MIN_VAL : Conf.GAME_PLAY_MAX_VAL;
                     }
                 }
-                ArrPool.giveBack(reachablePositions);
             }
         }
         return finalVal;

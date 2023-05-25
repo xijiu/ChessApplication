@@ -202,7 +202,7 @@ public class GameView extends View {
 			paint.setStyle(Paint.Style.STROKE);
 		}
         canvas.drawRect(rect3, paint);
-        canvas.drawText("公园老头", startX+6*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("喝茶老头", startX+6*GRID_WIDTH, baseline, textPaint);
 	}
 	/**
 	 * 画楚河汉界四个汉字
@@ -373,7 +373,7 @@ public class GameView extends View {
 				soundPool.play(soundID,1, 1, 0, 0, 1);
 				firstPressPiece(pressPosition);	// 第一次按下某个棋子时
 			} else {
-				byte[] reachablePositions = pressPiece.getReachablePositions(pressPiecePosition, board, false);
+				byte[] reachablePositions = pressPiece.getReachablePositions(pressPiecePosition, board, false, 10);
 				byte size = reachablePositions[0];
 				boolean valid = false;
 				for (int i = 1; i <= size; i++) {

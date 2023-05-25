@@ -1,6 +1,5 @@
 package com.lkn.chess.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
@@ -28,7 +27,7 @@ public class Rooks extends AbstractChessPiece {
 		this.setShowName("車");
 		initNum(role, RED_NUM, BLACK_NUM);
 	}
-	
+
 	/**
 	 * 设置子力的位置与加权关系
 	 * @author:likn1	Jan 22, 2016  5:53:42 PM
@@ -45,7 +44,7 @@ public class Rooks extends AbstractChessPiece {
 				{  4,  8,  6, 14, 12, 14,  6,  8,  4},
 				{ 10, 10, 10, 16,  8, 16, 10, 10, 10},
 				{ -2, 10, 10, 14, 12, 14, 10, 10, -2}
-			};
+		};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
 	}
@@ -60,7 +59,7 @@ public class Rooks extends AbstractChessPiece {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-		byte num = getReachablePositions(position, board, false)[0];
+		byte num = getReachablePositions(position, board, false, 10)[0];
 		int eatenVal = eatenValue(board, position);
 //		int eatenVal = 0;
 		return Math.max(0, defaultVal + arr[x][y] + num * 2 - eatenVal);
@@ -84,16 +83,15 @@ public class Rooks extends AbstractChessPiece {
 	}
 
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece, int level) {
+		reachablePositions = reachableHelper[level];
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
 		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
+		return reachablePositions;
 	}
 
 	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {

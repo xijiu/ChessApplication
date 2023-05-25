@@ -68,7 +68,7 @@ public class ChessBoard {
 					continue;
 				}
 				int piecePosition = ChessTools.toPosition(x, y);
-				byte[] positionArr = piece.getReachablePositions(piecePosition, this, true);
+				byte[] positionArr = piece.getReachablePositions(piecePosition, this, true, 10);
 				byte size = positionArr[0];
 				for (int i = 1; i <= size; i++) {
 					int position = positionArr[i];

@@ -1,12 +1,10 @@
 package com.lkn.chess.bean.chess_piece;
 
-import com.lkn.chess.ArrPool;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 
-import java.util.Map;
 
 /**
  * 士
@@ -95,16 +93,15 @@ public class Mandarins extends AbstractChessPiece {
 	}
 
 	@Override
-	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece) {
+	public byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece, int level) {
+		reachablePositions = reachableHelper[level];
 		reachableNum = 0;
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
 		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
-		byte[] result = ArrPool.borrow();
-		System.arraycopy(reachablePositions, 0, result, 0, reachablePositions.length);
-		return result;
+		return reachablePositions;
 	}
 
 	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {

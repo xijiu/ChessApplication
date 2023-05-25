@@ -60,7 +60,13 @@ public abstract class AbstractChessPiece implements Cloneable {
 			{  0,  0,  0,  0,  0,  0,  0,  0,  0}
 		};
 	protected int VAL_RED[][] = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
-	
+
+	/**
+	 * 迭代深度不超过10层
+	 * 这个对象仅为了辅助使用，每一层提供一个byte[19]，避免重复创建byte数组
+	 */
+	protected byte[][] reachableHelper = new byte[11][19];
+
 	public AbstractChessPiece(String id, Role PLAYER_ROLE) {
 		this.id = id;
 		this.PLAYER_ROLE = PLAYER_ROLE;
@@ -78,7 +84,7 @@ public abstract class AbstractChessPiece implements Cloneable {
 	}
 
 	/** 第一个位置存放当前可达位置的总数量，后面的element存放具体的position */
-	protected byte[] reachablePositions = new byte[19];
+	protected byte[] reachablePositions = null;
 	protected int reachableNum = 0;
 	
 	public AbstractChessPiece cloneImpl(Position position){
@@ -159,31 +165,6 @@ public abstract class AbstractChessPiece implements Cloneable {
 	}
 
 
-	private boolean canProtected(AbstractChessPiece enemyPiece, Integer enemyPos, ChessBoard board, int targetPosition) {
-		byte[] reachablePositions = enemyPiece.getReachablePositions(enemyPos, board, true);
-		byte size = reachablePositions[0];
-		for (int i = 1; i <= size; i++) {
-			byte targetPos = reachablePositions[i];
-			if (targetPos == targetPosition) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean canEat(AbstractChessPiece enemyPiece, Integer enemyPos, ChessBoard board, int targetPosition) {
-		byte[] reachablePositions = enemyPiece.getReachablePositions(enemyPos, board, false);
-		byte size = reachablePositions[0];
-		for (int i = 1; i <= size; i++) {
-			byte targetPos = reachablePositions[i];
-			if (targetPos == targetPosition) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
 	protected boolean isEnemy(AbstractChessPiece piece1, AbstractChessPiece piece2) {
 		return piece1.getPLAYER_ROLE() != piece2.getPLAYER_ROLE();
 	}
@@ -192,7 +173,16 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return piece1.getPLAYER_ROLE() == piece2.getPLAYER_ROLE();
 	}
 
-	public abstract byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece);
+	/**
+	 * 目标棋子可达到的位置点
+	 *
+	 * @param currPosition	当前棋子位置
+	 * @param board	棋盘
+	 * @param containsProtectedPiece	返回的结果是否包含其可以保护的己方棋子
+	 * @param level 从1开始
+	 * @return	可达到的位置点
+	 */
+	public abstract byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece, int level);
 
 	public abstract int valuation(ChessBoard board, int position);
 
