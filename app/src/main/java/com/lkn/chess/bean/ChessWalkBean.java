@@ -1,6 +1,5 @@
 package com.lkn.chess.bean;
 
-import com.lkn.chess.Conf;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 
 /**

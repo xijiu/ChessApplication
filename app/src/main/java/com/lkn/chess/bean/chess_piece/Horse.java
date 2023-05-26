@@ -6,10 +6,6 @@ import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
 /**
  * 马
  * @author:likn1	Jan 5, 2016  3:54:47 PM

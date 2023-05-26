@@ -1,21 +1,13 @@
 package com.lkn.chess.manual;
 
-import android.annotation.SuppressLint;
-import android.os.Build;
-import androidx.annotation.RequiresApi;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,7 +65,6 @@ public class Manual {
 
     public static ByteBuffer byteBuffer = null;
 
-    @SuppressLint("NewApi")
     public static Integer readManual(byte[] snapshot) {
         if (!TAKE_EFFECT) {
             return -1;
@@ -98,7 +89,6 @@ public class Manual {
         return -1;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private static void loadManualToMemory() throws Exception {
         if (LOAD_FLAG) {
             return;
@@ -128,7 +118,6 @@ public class Manual {
         LOAD_FLAG = true;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private static void readCharManual(String str) {
         if (str.length() <= 0) {
             return;
@@ -157,16 +146,28 @@ public class Manual {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public static void recordManualToMemory(ChessBoard chessBoard, int multiPos, Role role) {
         if (role == Role.BLACK) {
-            Set<Integer> set = map.computeIfAbsent(new BytesKey(chessBoard.snapshot()), k -> new HashSet<>());
+            BytesKey bytesKey = new BytesKey(chessBoard.snapshot());
+            Set<Integer> set = map.get(bytesKey);
+            if (set == null) {
+                set = new HashSet<>();
+                map.put(bytesKey, set);
+            }
+
             if (set.size() < 128) {
                 set.add(multiPos);
             }
 
+
             // 棋盘对称反转
-            Set<Integer> setConvert = map.computeIfAbsent(new BytesKey(chessBoard.snapshotConvert()), k -> new HashSet<>());
+            BytesKey bytesKeyConvert = new BytesKey(chessBoard.snapshotConvert());
+            Set<Integer> setConvert = map.get(bytesKeyConvert);
+            if (setConvert == null) {
+                setConvert = new HashSet<>();
+                map.put(bytesKey, setConvert);
+            }
+
             if (setConvert.size() < 128) {
                 int beginPos = PubTools.uncompressBegin(multiPos);
                 int beginX = ChessTools.fetchX(beginPos);

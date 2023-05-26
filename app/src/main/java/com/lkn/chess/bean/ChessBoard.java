@@ -1,6 +1,5 @@
 package com.lkn.chess.bean;
 
-import android.annotation.SuppressLint;
 import com.lkn.chess.BitArray;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
@@ -55,7 +54,6 @@ public class ChessBoard {
 		return blackNextStepPositionArr;
 	}
 
-	@SuppressLint("NewApi")
 	public void genericNextStepPositionMap() {
 		for (int i = 0; i < nextStepLen; i++) {
 			redNextStepPositionArr[i][0] = 0;
@@ -203,50 +201,50 @@ public class ChessBoard {
 
 	private void initForTest() {
 		putPiece(0, new Rooks(Role.RED));
-		putPiece(1, new Horse(Role.RED));
-		putPiece(2, new Elephants(Role.RED));
-		putPiece(3, new Mandarins(Role.RED));
+//		putPiece(1, new Horse(Role.RED));
+//		putPiece(2, new Elephants(Role.RED));
+//		putPiece(3, new Mandarins(Role.RED));
 		putPiece(4, new King(Role.RED));
 		putPiece(5, new Mandarins(Role.RED));
 		putPiece(6, new Elephants(Role.RED));
-		putPiece(7, new Rooks(Role.RED));
+		putPiece(7, new Horse(Role.RED));
+//		putPiece(8, new Rooks(Role.RED));
 
 
 		putPiece(21, new Cannons(Role.RED));
-		putPiece(24, new Cannons(Role.RED));
-		putPiece(26, new Horse(Role.RED));
+		putPiece(27, new Cannons(Role.RED));
 
 
-		putPiece(30, new Pawns(Role.RED));
-		putPiece(32, new Pawns(Role.RED));
+//		putPiece(30, new Pawns(Role.RED));
+//		putPiece(32, new Pawns(Role.RED));
 		putPiece(34, new Pawns(Role.RED));
 		putPiece(36, new Pawns(Role.RED));
-		putPiece(38, new Pawns(Role.RED));
+//		putPiece(38, new Pawns(Role.RED));
 
 
 		// --------------------------以下是后手的旗子----------------------------
 
 
-		putPiece(60, new Pawns(Role.BLACK));
-		putPiece(62, new Pawns(Role.BLACK));
+//		putPiece(60, new Pawns(Role.BLACK));
+//		putPiece(62, new Pawns(Role.BLACK));
 		putPiece(64, new Pawns(Role.BLACK));
 		putPiece(66, new Pawns(Role.BLACK));
-		putPiece(68, new Pawns(Role.BLACK));
+//		putPiece(68, new Pawns(Role.BLACK));
 
 
-		putPiece(74, new Cannons(Role.BLACK));
+		putPiece(71, new Cannons(Role.BLACK));
 		putPiece(77, new Cannons(Role.BLACK));
-		putPiece(78, new Horse(Role.BLACK));
 
 
-		putPiece(90, new Rooks(Role.BLACK));
-		putPiece(91, new Horse(Role.BLACK));
-		putPiece(92, new Elephants(Role.BLACK));
-		putPiece(93, new Mandarins(Role.BLACK));
+//		putPiece(90, new Rooks(Role.BLACK));
+//		putPiece(91, new Horse(Role.BLACK));
+//		putPiece(92, new Elephants(Role.BLACK));
+//		putPiece(93, new Mandarins(Role.BLACK));
 		putPiece(94, new King(Role.BLACK));
 		putPiece(95, new Mandarins(Role.BLACK));
 		putPiece(96, new Elephants(Role.BLACK));
-		putPiece(97, new Rooks(Role.BLACK));
+		putPiece(97, new Horse(Role.BLACK));
+		putPiece(98, new Rooks(Role.BLACK));
 	}
 
 	private void initBoard() {

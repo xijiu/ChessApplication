@@ -21,8 +21,6 @@ import java.util.Map;
  */
 public class GamePlayHigh {
 
-    private static int SOURCE_POS = 0;
-    private static int TARGET_POS = 0;
     private static int COUNT = 0;
     private static LinkedHashMap<Integer, Integer> posMap = new LinkedHashMap<>();
     /** 最佳路径 key 为 level */
@@ -31,6 +29,7 @@ public class GamePlayHigh {
 
     public int[] computerWalk(ChessBoard chessBoard) {
         long begin = System.currentTimeMillis();
+        adjustThinkDepthIfNecessary(chessBoard);
         COUNT = 0;
         bestRouteMap.clear();
 
@@ -64,13 +63,36 @@ public class GamePlayHigh {
             to = posMap.get(from);
         }
 
-
         System.out.println("SOURCE_POS is " + from);
         System.out.println("TARGET_POS is " + to);
         chessBoard.walk(from, to);
         System.out.println("考虑情况 " + COUNT + ", time cost " + (System.currentTimeMillis() - begin));
 //        printBestPath();
         return new int[]{from, to};
+    }
+
+    /**
+     * 调整思考深度
+     * 如果当前棋盘的子减少了，那么需要适当提高搜索树的深度
+     */
+    private void adjustThinkDepthIfNecessary(ChessBoard chessBoard) {
+        AbstractChessPiece[][] allPiece = chessBoard.getAllPiece();
+        int pieceNum = 0;
+        for (AbstractChessPiece[] arr : allPiece) {
+            for (AbstractChessPiece piece : arr) {
+                if (piece != null) {
+                    pieceNum++;
+                }
+            }
+        }
+        if (pieceNum >= 20) {
+            return;
+        }
+        if (pieceNum >= 8) {
+            Conf.THINK_DEPTH = Conf.DIFFICULTY_LEVEL.thinkDepth + 1;
+        } else {
+            Conf.THINK_DEPTH = Conf.DIFFICULTY_LEVEL.thinkDepth + 2;
+        }
     }
 
     private void printBestPath() {

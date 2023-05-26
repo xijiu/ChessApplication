@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 爬虫，用来拉取网页棋谱
@@ -107,7 +106,7 @@ public class Crawler {
         //一般按行读取网页数据，并进行内容分析
         //因此用BufferedReader和InputStreamReader把字节流转化为字符流的缓冲流
         //进行转换时，需要处理编码格式问题
-        BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
         boolean begin = false;
         //按行读取并打印
@@ -148,7 +147,7 @@ public class Crawler {
             //一般按行读取网页数据，并进行内容分析
             //因此用BufferedReader和InputStreamReader把字节流转化为字符流的缓冲流
             //进行转换时，需要处理编码格式问题
-            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
             StringBuilder sb = new StringBuilder();
             int step = -1;
@@ -198,7 +197,7 @@ public class Crawler {
             //一般按行读取网页数据，并进行内容分析
             //因此用BufferedReader和InputStreamReader把字节流转化为字符流的缓冲流
             //进行转换时，需要处理编码格式问题
-            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
             StringBuilder sb = new StringBuilder();
             int step = -1;

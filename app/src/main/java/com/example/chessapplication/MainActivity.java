@@ -1,19 +1,14 @@
 package com.example.chessapplication;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
 import android.graphics.Point;
-import android.os.PowerManager;
+import android.os.Bundle;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import com.lkn.chess.android.GameView;
 import com.lkn.chess.android.GlobalData;
 import com.lkn.chess.bean.ChessBoard;
@@ -24,21 +19,12 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public class MainActivity extends AppCompatActivity {
-    private PowerManager powerManager = null;
-    private PowerManager.WakeLock wakeLock = null;
 
-    @SuppressLint("InvalidWakeLockTag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        Window window = getWindow();
-//        window.setGravity(Gravity.TOP);
-//        window.setBackgroundDrawableResource(R.drawable.board);
-//        getWindow().setBackgroundDrawableResource(R.drawable.background1);
         readManual();
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        this.powerManager = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
-        this.wakeLock = this.powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "My Lock");
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);	// 设置全屏
         Display display = getWindowManager().getDefaultDisplay();
         ChessBoard board = new ChessBoard();
@@ -67,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @SuppressLint("ResourceType")
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 //        getMenuInflater().inflate(1, menu);

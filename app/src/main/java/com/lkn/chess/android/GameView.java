@@ -24,6 +24,7 @@ import android.view.View;
 import com.example.chessapplication.R;
 import com.lkn.chess.ChessTools;
 import com.lkn.chess.Conf;
+import com.lkn.chess.DifficultyLevel;
 import com.lkn.chess.GamePlayHigh;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
@@ -47,8 +48,8 @@ public class GameView extends View {
 	/** 玩下按下旗子的位置 */
 	private int pressPiecePosition = -1;
 	private boolean computerThinking = false;	// 电脑是否在思考中
-	private int lastWalkBegin;
-	private int lastWalkEnd;
+	private int lastWalkBegin = -1;
+	private int lastWalkEnd = -1;
 	private boolean gameOver = false;
 	private int soundID = 1;
 	private Camera camera;
@@ -165,7 +166,7 @@ public class GameView extends View {
 		paint.setStyle(Paint.Style.STROKE);  
 		paint.setColor(Color.BLACK);
 		RectF rect = new RectF(startX + 1.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 2.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
-		if(Conf.THINK_DEPTH == 3) {
+		if (Conf.DIFFICULTY_LEVEL == DifficultyLevel.EASY) {
 			paint.setColor(Color.LTGRAY);
 			paint.setStyle(Paint.Style.FILL);
 		} else {
@@ -184,7 +185,7 @@ public class GameView extends View {
 		/****************************************************************************************************************************************/
 		RectF rect2 = new RectF(startX + 3.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 4.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
 		paint.setColor(Color.BLACK);
-        if(Conf.THINK_DEPTH == 4) {
+        if (Conf.DIFFICULTY_LEVEL == DifficultyLevel.MID) {
         	paint.setColor(Color.LTGRAY);
 			paint.setStyle(Paint.Style.FILL);
         } else {
@@ -195,14 +196,14 @@ public class GameView extends View {
 		/****************************************************************************************************************************************/
         RectF rect3 = new RectF(startX + 5.25f*GRID_WIDTH, startY+11*GRID_WIDTH, startX + 6.75f*GRID_WIDTH, startY+11.5f*GRID_WIDTH);
         paint.setColor(Color.BLACK);
-        if(Conf.THINK_DEPTH == 5){
+        if (Conf.DIFFICULTY_LEVEL == DifficultyLevel.HARD) {
         	paint.setColor(Color.LTGRAY);
 			paint.setStyle(Paint.Style.FILL);
 		} else {
 			paint.setStyle(Paint.Style.STROKE);
 		}
         canvas.drawRect(rect3, paint);
-        canvas.drawText("喝茶老头", startX+6*GRID_WIDTH, baseline, textPaint);
+        canvas.drawText("跛足老头", startX+6*GRID_WIDTH, baseline, textPaint);
 	}
 	/**
 	 * 画楚河汉界四个汉字
@@ -337,20 +338,20 @@ public class GameView extends View {
 		boolean isComputerTurn = false;
 		
 		if((touchX < startX - GRID_WIDTH/2) || (touchX > startX+(COLUMN_NUM-1)*GRID_WIDTH + GRID_WIDTH/2) || (touchY < startY - GRID_WIDTH/2) || (touchY > startY + (LINE_NUM-1)*GRID_WIDTH + GRID_WIDTH/2)) {	//点击到棋盘以外的位置
-			int changeDepth = -1;
+			DifficultyLevel difficultyLevel = null;
 			if(touchX >= (startX + 1.25f*GRID_WIDTH) && touchX <= (startX + 2.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){	// 小白级
-				changeDepth = 3;
+				difficultyLevel = DifficultyLevel.EASY;
 			} else if(touchX >= (startX + 3.25f*GRID_WIDTH) && touchX <= (startX + 4.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){
-				changeDepth = 4;
+				difficultyLevel = DifficultyLevel.MID;
 			} else if(touchX >= (startX + 5.25f*GRID_WIDTH) && touchX <= (startX + 6.75f*GRID_WIDTH) && touchY >= (startY+11*GRID_WIDTH) && touchY <= (startY+11.5f*GRID_WIDTH)){
-				changeDepth = 5;
+				difficultyLevel = DifficultyLevel.HARD;
 			}
-			if(changeDepth != -1){
-				final int depth = changeDepth;
-				new AlertDialog.Builder(context).setTitle("确认").setMessage("确定选择此难度，并重新开始游戏吗？" ).setPositiveButton("是", new DialogInterface.OnClickListener() {  
+			if (difficultyLevel != null) {
+				final DifficultyLevel finalDifficultyLevel = difficultyLevel;
+				new AlertDialog.Builder(context).setTitle("确认").setMessage("确定选择此难度，并重新开始游戏吗？" ).setPositiveButton("是", new DialogInterface.OnClickListener() {
 	                @Override
-	                public void onClick(DialogInterface dialog,int which) {
-						Conf.THINK_DEPTH = depth;
+	                public void onClick(DialogInterface dialog, int which) {
+	                	Conf.changeDifficulty(finalDifficultyLevel);
 	    				reBeginGame();
 	    				invalidate();
 	                }

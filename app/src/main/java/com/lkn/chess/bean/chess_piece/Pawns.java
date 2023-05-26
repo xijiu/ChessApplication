@@ -6,7 +6,6 @@ import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 
-import java.util.Map;
 
 /**
  * 兵

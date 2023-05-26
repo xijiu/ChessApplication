@@ -5,8 +5,6 @@ import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 
-import java.util.Map;
-
 /**
  * 将
  * @author:likn1	Jan 5, 2016  3:53:53 PM

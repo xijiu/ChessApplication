@@ -8,9 +8,6 @@ import com.lkn.chess.bean.Position;
 import com.lkn.chess.bean.Role;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * 象棋中棋子的抽象类，每个旗子都设置一个唯一编号
