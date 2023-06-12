@@ -41,10 +41,10 @@ public abstract class AbstractChessPiece implements Cloneable {
 	private Integer fightVal;	// 棋子战斗力（某个数值，战斗力会随着棋势的进行发生变更）
 	protected Integer defaultVal;	// 棋子默认战斗力，不会发生改变
 	private final Role PLAYER_ROLE;	// 象棋先后手
-	private boolean isAlive;	// 是否在战斗，默认为true
 	private Position currPosition;	// 棋子当前的位置
 	// 每种棋子对应唯一一个num值
 	protected int num = 0;
+	private int pieceIndex = 0;
 	protected int VAL_BLACK[][] = {	// 先手方的位置与权值加成
 			{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 			{  0,  0,  0,  0,  0,  0,  0,  0,  0},
@@ -63,7 +63,7 @@ public abstract class AbstractChessPiece implements Cloneable {
 	 * 迭代深度不超过10层
 	 * 这个对象仅为了辅助使用，每一层提供一个byte[19]，避免重复创建byte数组
 	 */
-	protected byte[][] reachableHelper = new byte[11][19];
+	protected byte[][] reachableHelper = new byte[50][19];
 
 	public AbstractChessPiece(String id, Role PLAYER_ROLE) {
 		this.id = id;
@@ -84,25 +84,6 @@ public abstract class AbstractChessPiece implements Cloneable {
 	/** 第一个位置存放当前可达位置的总数量，后面的element存放具体的position */
 	protected byte[] reachablePositions = null;
 	protected int reachableNum = 0;
-	
-	public AbstractChessPiece cloneImpl(Position position){
-		AbstractChessPiece clone = clone();
-		clone.setCurrPosition(position);
-		return clone;
-	}
-	
-	/**
-	 * 实现对象克隆
-	 */
-	public AbstractChessPiece clone(){
-		AbstractChessPiece clone = null;
-		try {
-			clone = (AbstractChessPiece)super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return clone;
-	}
 
 
 	/**
@@ -111,9 +92,11 @@ public abstract class AbstractChessPiece implements Cloneable {
 	 * 	  卒马卒
 	 * 		卒
 	 */
-	protected int eatenValue(ChessBoard board, int currPosition) {
-		Role nextRole = Conf.THINK_DEPTH % 2 == 1 ? Role.RED : Role.BLACK;
-		if (this.getPLAYER_ROLE() == nextRole) {
+	protected int eatenValue(ChessBoard board, int currPosition, Role role) {
+//		if (1 == 1) {
+//			return 0;
+//		}
+		if (this.getPLAYER_ROLE() == role) {
 			return 0;
 		}
 		int[] redValArr = board.getRedNextStepPositionArr()[currPosition];
@@ -183,13 +166,64 @@ public abstract class AbstractChessPiece implements Cloneable {
 	 */
 	public abstract byte[] getReachablePositions(int currPosition, ChessBoard board, boolean containsProtectedPiece, int level);
 
-	public abstract int valuation(ChessBoard board, int position);
+	/**
+	 * 目标棋子可以吃到子的位置集合
+	 *
+	 * @param currPosition	当前位置
+	 * @param board	棋盘
+	 * @param level	层级，从1开始
+	 * @return	可吃子的位置集合
+	 */
+	public byte[] getEatPositions(int currPosition, ChessBoard board, int level) {
+		byte[] reachablePositions = getReachablePositions(currPosition, board, false, level);
+		byte length = reachablePositions[0];
+		int index = 1;
+		for (int i = 1; i <= length; i++) {
+			byte position = reachablePositions[i];
+			if (ChessTools.getPiece(board.getAllPiece(), position) != null) {
+				reachablePositions[index++] = position;
+			}
+		}
+		reachablePositions[0] = (byte) index;
+		return reachablePositions;
+	}
+
+	public abstract int valuation(ChessBoard board, int position, Role role);
 
 	public abstract int walkAsManual(ChessBoard board, int startPos, char cmd1, char cmd2);
 
 	public abstract byte type();
 
-//	public abstract boolean canEat(ChessBoard board, int currPos, int targetPos);
+	/**
+	 * 是否将军
+	 */
+	public abstract boolean kingCheck(ChessBoard board, int position);
+
+	/**
+	 * 寻找将的位置
+	 */
+	protected int findKingPos(AbstractChessPiece[][] allPiece, Role role) {
+		if (role == Role.RED) {
+			for (int x = 0; x < 3; x++) {
+				for (int y = 3; y <= 5; y++) {
+					AbstractChessPiece piece = allPiece[x][y];
+					if (piece != null && piece.type() == 5) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		} else {
+			for (int x = 7; x <= 9; x++) {
+				for (int y = 3; y <= 5; y++) {
+					AbstractChessPiece piece = allPiece[x][y];
+					if (piece != null && piece.type() == 12) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		}
+		throw new RuntimeException("can not find king");
+	}
 
 	public String getId() {
 		return id;
@@ -223,14 +257,6 @@ public abstract class AbstractChessPiece implements Cloneable {
 		this.fightVal = fightVal;
 	}
 
-	public boolean isAlive() {
-		return isAlive;
-	}
-
-	public void setAlive(boolean isFight) {
-		this.isAlive = isFight;
-	}
-
 	public Role getPLAYER_ROLE() {
 		return PLAYER_ROLE;
 	}
@@ -239,10 +265,6 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return PLAYER_ROLE == Role.RED;
 	}
 
-	public Position getCurrPosition() {
-		return currPosition;
-	}
-	
 	/**
 	 * 设置棋子的默认攻击力，同时为fightVal设置值，一般只在构造方法中调用
 	 * @param defaultVal
@@ -254,6 +276,14 @@ public abstract class AbstractChessPiece implements Cloneable {
 	
 	public int getDefaultVal() {
 		return defaultVal;
+	}
+
+	public int getPieceIndex() {
+		return pieceIndex;
+	}
+
+	public void setPieceIndex(int pieceIndex) {
+		this.pieceIndex = pieceIndex;
 	}
 
 	protected void recordReachablePosition(int position) {
@@ -288,49 +318,6 @@ public abstract class AbstractChessPiece implements Cloneable {
 
 		System.out.println(" --------- ");
 		throw new RuntimeException();
-	}
-
-	/**
-	 * 设置棋子的位置
-	 * @param currPosition
-	 * @param changeFightValue	true:改变战斗力	false:不改变战斗力
-	 */
-	public void setCurrPosition(Position currPosition, boolean changeFightValue) {
-		setCurrPosition(currPosition);
-		if(changeFightValue){
-			pieceValueChange();
-		}
-	}
-	
-	/**
-	 * 设置棋子的位置
-	 * @param currPosition
-	 */
-	public void setCurrPosition(Position currPosition) {
-		this.currPosition = currPosition;
-		if(currPosition != null){
-			setAlive(true);
-			currPosition.setExistPiece(true);
-			currPosition.setPiece(this);
-		}else {
-			setAlive(false);
-		}
-	}
-
-	/**
-	 * 当前的位置变化，可能影响棋子的战斗力、权值变化
-	 * @author:likn1	Jan 22, 2016  6:42:56 PM
-	 */
-	private void pieceValueChange() {
-		int changeVal = 0;
-		Integer x = currPosition.getX();
-		Integer y = currPosition.getY();
-		if(PLAYER_ROLE == Role.RED){	// 先手
-			changeVal = VAL_RED[y][x];
-		} else {	// 后手
-			changeVal = VAL_BLACK[y][x];
-		}
-		setFightVal(defaultVal + changeVal);	// 设置战斗力
 	}
 	
 }

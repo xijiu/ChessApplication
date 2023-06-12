@@ -34,16 +34,16 @@ public class Rooks extends AbstractChessPiece {
 	 */
 	private void setValues() {
 		int[][] VAL_RED_TEMP = {	// 先手方的位置与权值加成
-				{ 14, 14, 12, 18, 16, 18, 12, 14, 14},
-				{ 16, 20, 18, 24, 26, 24, 18, 20, 16},
-				{ 12, 12, 12, 18, 18, 18, 12, 12, 12},
-				{ 12, 18, 16, 22, 22, 22, 16, 18, 12},
-				{ 12, 14, 12, 18, 18, 18, 12, 14, 12},
-				{ 12, 16, 14, 20, 20, 20, 14, 16, 12},
-				{  6, 10,  8, 14, 14, 14,  8, 10,  6},
-				{  4,  8,  6, 14, 12, 14,  6,  8,  4},
-				{ 10, 10, 10, 16,  8, 16, 10, 10, 10},
-				{ -2, 10, 10, 14, 12, 14, 10, 10, -2}
+				{206,208,207,213,214,213,207,208,206},
+				{206,212,209,216,233,216,209,212,206},
+				{206,208,207,214,216,214,207,208,206},
+				{206,213,213,216,216,216,213,213,206},
+				{208,211,211,214,215,214,211,211,208},
+				{208,212,212,214,215,214,212,212,208},
+				{204,209,204,212,214,212,204,209,204},
+				{198,208,204,212,212,212,204,208,198},
+				{200,208,206,212,200,212,206,208,200},
+				{194,206,204,212,200,212,204,206,194}
 		};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
@@ -55,16 +55,61 @@ public class Rooks extends AbstractChessPiece {
 	}
 
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
 		if (Conf.SIMPLE_VALUE) {
-			return defaultVal + arr[x][y];
+			return arr[x][y];
 		}
 		byte num = getReachablePositions(position, board, true, 10)[0];
-		int eatenVal = eatenValue(board, position);
-		return Math.max(0, defaultVal + arr[x][y] + num * 2 - eatenVal);
+		int eatenVal = eatenValue(board, position, role);
+//		int eatenVal = 0;
+		return Math.max(0, arr[x][y] + num * 2 - eatenVal);
+	}
+
+	@Override
+	public boolean kingCheck(ChessBoard board, int position) {
+		int currX = ChessTools.fetchX(position);
+		int currY = ChessTools.fetchY(position);
+		if (isRed()) {
+			if (currX >= 7 || (currY >= 3 && currY <= 5)) {
+				return isKingCheck(board, currX, currY);
+			}
+		} else {
+			if (currX <= 2 || (currY >= 3 && currY <= 5)) {
+				return isKingCheck(board, currX, currY);
+			}
+		}
+		return false;
+	}
+
+	private boolean isKingCheck(ChessBoard board, int currX, int currY) {
+		AbstractChessPiece[][] allPiece = board.getAllPiece();
+		int kingPos = findKingPos(allPiece, getPLAYER_ROLE().nextRole());
+		int kingX = ChessTools.fetchX(kingPos);
+		int kingY = ChessTools.fetchY(kingPos);
+		if (kingX == currX) {
+			int startY = Math.min(kingY, currY);
+			int endY = Math.max(kingY, currY);
+			for (int y = startY + 1; y < endY; y++) {
+				if (allPiece[currX][y] != null) {
+					return false;
+				}
+			}
+			return true;
+		}
+		if (kingY == currY) {
+			int startX = Math.min(kingX, currX);
+			int endX = Math.max(kingX, currX);
+			for (int x = startX + 1; x < endX; x++) {
+				if (allPiece[x][currY] != null) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	@Override

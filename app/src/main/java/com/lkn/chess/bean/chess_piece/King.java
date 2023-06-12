@@ -45,9 +45,9 @@ public class King extends AbstractChessPiece {
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,-10,-10,-10,  0,  0,  0},
-				{  0,  0,  0, -8, -8, -8,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
+				{  0,  0,  0,  1,  1,  1,  0,  0,  0},
+				{  0,  0,  0,  2,  2,  2,  0,  0,  0},
+				{  0,  0,  0, 11, 15, 11,  0,  0,  0}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
@@ -59,7 +59,13 @@ public class King extends AbstractChessPiece {
 	}
 
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public boolean kingCheck(ChessBoard board, int position) {
+		return false;
+	}
+
+
+	@Override
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
@@ -96,12 +102,15 @@ public class King extends AbstractChessPiece {
 	}
 
 	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
-		tryReach(currX - 1, currY, allPiece, containsProtectedPiece);
-		tryReach(currX + 1, currY, allPiece, containsProtectedPiece);
-		tryReach(currX, currY - 1, allPiece, containsProtectedPiece);
-		tryReach(currX, currY + 1, allPiece, containsProtectedPiece);
+		int enemyKingPos = findKingPos(allPiece, getPLAYER_ROLE().nextRole());
+		int enemyKingX = ChessTools.fetchX(enemyKingPos);
+		int enemyKingY = ChessTools.fetchY(enemyKingPos);
+		tryReach(currX - 1, currY, allPiece, containsProtectedPiece, enemyKingX, enemyKingY);
+		tryReach(currX + 1, currY, allPiece, containsProtectedPiece, enemyKingX, enemyKingY);
+		tryReach(currX, currY - 1, allPiece, containsProtectedPiece, enemyKingX, enemyKingY);
+		tryReach(currX, currY + 1, allPiece, containsProtectedPiece, enemyKingX, enemyKingY);
 
-		tryReachToEnemyKing(currX, currY, allPiece);
+//		tryReachToEnemyKing(currX, currY, allPiece);
 	}
 
 	private void tryReachToEnemyKing(int currX, int currY, AbstractChessPiece[][] allPiece) {
@@ -128,8 +137,23 @@ public class King extends AbstractChessPiece {
 		}
 	}
 
-	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece, int enemyKingX, int enemyKingY) {
 		if (isInArea(x, y)) {
+			// 两个老头不能见面
+			if (enemyKingY == y) {
+				boolean empty = true;
+				int minX = Math.min(x, enemyKingX);
+				int maxX = Math.max(x, enemyKingX);
+				for (int tmpX = minX + 1; tmpX < maxX; tmpX++) {
+					if (allPiece[tmpX][y] != null) {
+						empty = false;
+						break;
+					}
+				}
+				if (empty) {
+					return;
+				}
+			}
 			AbstractChessPiece piece = allPiece[x][y];
 			if (piece == null || isEnemy(this, piece)) {
 				recordReachablePosition(ChessTools.toPosition(x, y));

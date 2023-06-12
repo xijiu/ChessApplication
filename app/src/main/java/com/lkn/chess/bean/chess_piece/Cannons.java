@@ -33,16 +33,16 @@ public class Cannons extends AbstractChessPiece {
 	 */
 	private void setValues() {
 		int[][] VAL_RED_TEMP = {	// 先手方的位置与权值加成
-				{  6,  4,  0,  0,  0,  0,  0,  4,  6},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0, 20,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  4,  0,  6,  6, 20,  6,  6,  0,  4},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
+				{100,100, 96, 91, 90, 91, 96,100,100},
+				{ 98, 98, 96, 92, 89, 92, 96, 98, 98},
+				{ 97, 97, 96, 91, 92, 91, 96, 97, 97},
+				{ 96, 99, 99, 98,100, 98, 99, 99, 96},
+				{ 96, 96, 96, 96,100, 96, 96, 96, 96},
+				{ 95, 96, 99, 96,100, 96, 99, 96, 95},
+				{ 96, 96, 96, 96, 96, 96, 96, 96, 96},
+				{ 97, 96,100, 99,101, 99,100, 96, 97},
+				{ 96, 97, 98, 98, 98, 98, 98, 97, 96},
+				{ 96, 96, 97, 99, 99, 99, 97, 96, 96}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
@@ -61,20 +61,73 @@ public class Cannons extends AbstractChessPiece {
 		return reachablePositions;
 	}
 
+	@Override
+	public boolean kingCheck(ChessBoard board, int position) {
+		int currX = ChessTools.fetchX(position);
+		int currY = ChessTools.fetchY(position);
+		if (isRed()) {
+			if (currX >= 7 || (currY >= 3 && currY <= 5)) {
+				return isKingCheck(board, currX, currY);
+			}
+		} else {
+			if (currX <= 2 || (currY >= 3 && currY <= 5)) {
+				return isKingCheck(board, currX, currY);
+			}
+		}
+		return false;
+	}
+
+	private boolean isKingCheck(ChessBoard board, int currX, int currY) {
+		AbstractChessPiece[][] allPiece = board.getAllPiece();
+		int kingPos = findKingPos(allPiece, getPLAYER_ROLE().nextRole());
+		int kingX = ChessTools.fetchX(kingPos);
+		int kingY = ChessTools.fetchY(kingPos);
+		if (kingX == currX) {
+			int startY = Math.min(kingY, currY);
+			int endY = Math.max(kingY, currY);
+			int num = 0;
+			for (int y = startY + 1; y < endY; y++) {
+				if (allPiece[currX][y] != null) {
+					num++;
+					if (num >= 2) {
+						break;
+					}
+				}
+			}
+			return num == 1;
+		}
+		if (kingY == currY) {
+			int startX = Math.min(kingX, currX);
+			int endX = Math.max(kingX, currX);
+			int num = 0;
+			for (int x = startX + 1; x < endX; x++) {
+				if (allPiece[currX][x] != null) {
+					num++;
+					if (num >= 2) {
+						break;
+					}
+				}
+			}
+			return num == 1;
+		}
+		return false;
+	}
+
 	/**
 	 * 炮跟将中间如果没有棋子，那么威力将大增
 	 */
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
 		if (Conf.SIMPLE_VALUE) {
-			return defaultVal + arr[x][y];
+			return 20 + arr[x][y];
 		}
 		int hollowVal = calcHollow(x, y, board.getAllPiece());
-		int eatenVal = eatenValue(board, position);
-		return Math.max(0, defaultVal + hollowVal + arr[x][y] - eatenVal);
+		int eatenVal = eatenValue(board, position, role);
+//		int eatenVal = 0;
+		return Math.max(0, hollowVal + 20 + arr[x][y] - eatenVal);
 	}
 
 	/**
@@ -119,7 +172,7 @@ public class Cannons extends AbstractChessPiece {
 	}
 
 	private int calcHollowValue(int gap) {
-		return 180 + 20 * gap;
+		return 20 * gap;
 	}
 
 	@Override

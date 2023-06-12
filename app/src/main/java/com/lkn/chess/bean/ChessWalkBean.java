@@ -30,91 +30,12 @@ public class ChessWalkBean {
 		}
 	}
 
-	/**
-	 * 行走，一般用于电脑思考时模拟走棋的过程
-	 * @author:likn1	Feb 22, 2016  2:50:13 PM
-	 * @param beginPosition
-	 * @param endPosition
-	 * @return
-	 */
-	public AbstractChessPiece[] walk(Position beginPosition, Position endPosition){
-		AbstractChessPiece eatenPiece = null;	//  被吃掉的棋子，如果没有发生吃子行为，那么将返回null
-		if(endPosition.isExistPiece()){	// 如果存在吃子行为
-			eatenPiece = endPosition.getPiece();
-			eatenPiece.setAlive(false);	// 被吃掉的棋子设置为不在战斗
-		}
-		AbstractChessPiece walkPiece = beginPosition.getPiece();
-		beginPosition.setPiece(null);	// 将之前的位置设置为null
-		walkPiece.setCurrPosition(endPosition, true);	// 棋子变更位置，同时改变该棋子的战斗力
-		AbstractChessPiece[] arr = {walkPiece, eatenPiece};
-		return arr;
-	}
-	
-	/**
-	 * 回走
-	 * @author:likn1	Jan 22, 2016  3:20:37 PM
-	 * @param beginPosition
-	 * @param endPosition
-	 * @param arr
-	 */
-	public void walkBack(Position beginPosition, Position endPosition, AbstractChessPiece[] arr) {
-		AbstractChessPiece beginPiece = arr[0];
-		AbstractChessPiece endPiece = arr[1];
-		if(endPiece != null){	// 如果存在吃子行为
-			endPiece.setAlive(true);	// 被吃掉的棋子设置为在战斗
-			endPiece.setCurrPosition(endPosition, true);
-		} else {
-			endPosition.setPiece(null);
-		}
-		beginPiece.setCurrPosition(beginPosition, true);
-	}
-	
-	/**
-	 * 当前的对象跟bean在开始与结束位置是否相同
-	 * @author:likn1	Jan 11, 2016  3:55:32 PM
-	 * @param bean
-	 * @return
-	 */
-	public boolean isSameBeginAndEndPosition(ChessWalkBean bean){
-		boolean isSame = false;
-		Integer currBeginX = this.beginPosition.getX();
-		Integer currBeginY = this.beginPosition.getY();
-		Integer currEndX = this.endPosition.getX();
-		Integer currEndY = this.endPosition.getY();
-		if(bean != null){
-			Integer beginX = bean.getBeginPosition().getX();
-			Integer beginY = bean.getBeginPosition().getY();
-			Integer endX = bean.getEndPosition().getX();
-			Integer endY = bean.getEndPosition().getY();
-			if(currBeginX.equals(beginX) && currBeginY.equals(beginY) && currEndX.equals(endX) && currEndY.equals(endY)){
-				isSame = true;
-			}
-		}
-		return isSame;
-	}
-
 	public String getId() {
 		return id;
 	}
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public Position getBeginPosition() {
-		return beginPosition;
-	}
-
-	public void setBeginPosition(Position beginPosition) {
-		this.beginPosition = beginPosition;
-	}
-
-	public Position getEndPosition() {
-		return endPosition;
-	}
-
-	public void setEndPosition(Position endPosition) {
-		this.endPosition = endPosition;
 	}
 
 	public AbstractChessPiece getPiece() {
@@ -124,29 +45,4 @@ public class ChessWalkBean {
 	public void setPiece(AbstractChessPiece piece) {
 		this.piece = piece;
 	}
-
-	public boolean isEat() {
-		return isEat;
-	}
-
-	public void setEat(boolean isEat) {
-		this.isEat = isEat;
-	}
-
-	public AbstractChessPiece getEatenPiece() {
-		return eatenPiece;
-	}
-
-	public void setEatenPiece(AbstractChessPiece eatenPiece) {
-		this.eatenPiece = eatenPiece;
-	}
-
-	public Integer getFightVal() {
-		return fightVal;
-	}
-
-	public void setFightVal(Integer fightVal) {
-		this.fightVal = fightVal;
-	}
-
 }

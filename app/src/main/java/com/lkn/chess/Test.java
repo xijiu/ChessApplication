@@ -8,11 +8,7 @@ import java.util.Scanner;
 public class Test {
 	
 	public static void main(String[] args) {
-//		new Test().personWalk();
-		ChessBoard board = new ChessBoard();
-		AbstractChessPiece[][] allPiece = board.getAllPiece();
-
-		System.out.println(allPiece[0][1].valuation(board, 1));
+		new Test().personWalk();
 	}
 
 	private void personWalk() {

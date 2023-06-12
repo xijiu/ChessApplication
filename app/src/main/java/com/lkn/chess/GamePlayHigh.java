@@ -4,6 +4,7 @@ import android.util.Log;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.chess.manual.BytesKey;
 import com.lkn.chess.manual.Manual;
 
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.lkn.chess.DifficultyLevel.EASY;
 
 /**
  * 默认电脑是黑方
@@ -25,7 +28,9 @@ public class GamePlayHigh {
     private static LinkedHashMap<Integer, Integer> posMap = new LinkedHashMap<>();
     /** 最佳路径 key 为 level */
     private static Map<Integer, Integer> bestRouteMap = new HashMap<>();
+    private static Map<Integer, Integer> exchangeTableMap = new HashMap<>();
     private static int TMP_THINK_DEPTH = 0;
+    private static int EXTEND_THINK_DEPTH = 0;
 
     public int[] computerWalk(ChessBoard chessBoard) {
         long begin = System.currentTimeMillis();
@@ -42,11 +47,14 @@ public class GamePlayHigh {
             from = PubTools.uncompressBegin(multiPos);
             to = PubTools.uncompressEnd(multiPos);
         } else {
+            maxLevel = -1;
             for (int i = 2; i <= Conf.THINK_DEPTH; i++) {
                 TMP_THINK_DEPTH = i;
                 posMap.clear();
+                exchangeTableMap.clear();
                 think(chessBoard, Role.BLACK, 1, Integer.MAX_VALUE);
             }
+            System.out.println("maxLevel maxLevel maxLevel is " + maxLevel);
 
 //            System.out.println("----------begin-------");
 //            System.out.println(sb);
@@ -55,6 +63,10 @@ public class GamePlayHigh {
 //            System.out.println("----------begin1-------");
 //            System.out.println(sb1);
 //            System.out.println("----------end1-------");
+//
+//            System.out.println("----------begin2-------");
+//            System.out.println(sb2);
+//            System.out.println("----------end2-------");
 
 
             List<Integer> list = new ArrayList<>(posMap.keySet());
@@ -67,7 +79,8 @@ public class GamePlayHigh {
         System.out.println("TARGET_POS is " + to);
         chessBoard.walk(from, to);
         System.out.println("考虑情况 " + COUNT + ", time cost " + (System.currentTimeMillis() - begin));
-//        printBestPath();
+
+        chessBoard.boardPrintToConsole();
         return new int[]{from, to};
     }
 
@@ -110,56 +123,95 @@ public class GamePlayHigh {
 
     private static boolean valid = false;
     private static boolean valid1 = false;
+    private static boolean valid2 = false;
     private static StringBuilder sb = new StringBuilder();
     private static StringBuilder sb1 = new StringBuilder();
+    private static StringBuilder sb2 = new StringBuilder();
+    private static int maxLevel = -1;
+    private static BytesKey bytesKey = new BytesKey(null);
 
     private int think(ChessBoard chessBoard, Role role, int level, int parentVal) {
         int finalVal = role == Role.RED ? Integer.MAX_VALUE : Integer.MIN_VALUE;
-        AbstractChessPiece[][] pieceArr = role == Role.RED ? chessBoard.getRedPiece() : chessBoard.getBlackPiece();
-        int firstPos = sortPieceMap(pieceArr, level);
-        int firstPosTmp = firstPos;
-        for (int x = 0; x < pieceArr.length; x++) {
-            for (int y = 0; y < pieceArr[x].length; y++) {
-                int sourcePos = ChessTools.toPosition(x, y);
-                AbstractChessPiece piece = pieceArr[x][y];
-                if (firstPos != -1) {
-                    sourcePos = firstPos;
-                    piece = pieceArr[ChessTools.fetchX(sourcePos)][ChessTools.fetchY(sourcePos)];
-                    firstPos = -1;
-                    y--;
-                }
-                if (piece == null) {
-                    continue;
-                }
-                if (firstPosTmp == sourcePos && y != -1) {
-                    continue;
-                }
+//        int finalVal = role == Role.RED ? parentVal : parentVal;
+        AbstractChessPiece[][] pieceArr = chessBoard.getAllPiece();
+        byte[] singlePieceArr = role == Role.RED ? chessBoard.getRedPieceArr() : chessBoard.getBlackPieceArr();
+        int firstPos = sortPieceMap(pieceArr, level, role);
 
-                byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false, level);
-                exchangeBestPositionToFirst(reachablePositions, level);
-                byte size = reachablePositions[0];
+        for (int k = -1; k < singlePieceArr.length; k++) {
+            int sourcePos = k == -1 ? firstPos : singlePieceArr[k];
+            if (sourcePos == -1) {
+                continue;
+            }
+
+            int x = ChessTools.fetchX(sourcePos);
+            int y = ChessTools.fetchY(sourcePos);
+            AbstractChessPiece piece = pieceArr[x][y];
+
+            if (piece == null) {
+                continue;
+            }
+            if (firstPos == sourcePos && k != -1) {
+                continue;
+            }
+
+            byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false, level);
+            // 只保留吃的场景
+//            retainEatCaseIfNecessary(chessBoard, reachablePositions, level);
+            topEatCase(reachablePositions, pieceArr);
+            exchangeBestPositionToFirst(reachablePositions, level);
+            byte size = reachablePositions[0];
+            if (size == 0) {
+                COUNT++;
+                continue;
+            } else {
                 for (int i = 1; i <= size; i++) {
                     COUNT++;
                     byte targetPos = reachablePositions[i];
-//                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
+//                    if (level == 1 && sourcePos == 78 && targetPos == 86) {
 //                        valid = true;
 //                    }
-//                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
+//                    if (valid && level == 2 && sourcePos == 65 && targetPos == 86) {
 //                        valid1 = true;
+//                    }
+//                    if (valid && valid1 && level == 3 && sourcePos == 98 && targetPos == 97) {
+//                        valid2 = true;
 //                    }
                     AbstractChessPiece eatenPiece = chessBoard.walk(sourcePos, targetPos);
                     boolean isKingEaten = isKingEaten(eatenPiece);
                     Role nextRole = role.nextRole();
                     int newLevel = level + 1;
+                    maxLevel = Math.max(maxLevel, newLevel);
                     int value;
-                    if (newLevel <= TMP_THINK_DEPTH && !isKingEaten) {
-                        value = think(chessBoard, nextRole, newLevel, finalVal);
-                    } else {
-                        if (isKingEaten) {
-                            value = role == Role.RED ? Integer.MIN_VALUE : Integer.MAX_VALUE - level;
+                    if (!isKingEaten) {
+                        if (TMP_THINK_DEPTH < Conf.THINK_DEPTH && level == TMP_THINK_DEPTH) {
+                            value = computeChessValue(chessBoard, role.nextRole());
                         } else {
-                            value = computeChessValue(chessBoard);
+                            boolean isAdjustDepth = false;
+                            if (level == TMP_THINK_DEPTH - 1) {
+                                if (piece.kingCheck(chessBoard, targetPos) && EXTEND_THINK_DEPTH == 0) {
+                                    isAdjustDepth = true;
+                                    EXTEND_THINK_DEPTH = adjustExtendThinkPath(level);
+                                }
+                                value = think(chessBoard, nextRole, newLevel, finalVal);
+                            } else {
+                                if (level == TMP_THINK_DEPTH && piece.kingCheck(chessBoard, targetPos) && EXTEND_THINK_DEPTH == 0) {
+                                    isAdjustDepth = true;
+                                    EXTEND_THINK_DEPTH = adjustExtendThinkPath(level);
+                                }
+                                if (level - TMP_THINK_DEPTH < EXTEND_THINK_DEPTH) {
+                                    value = think(chessBoard, nextRole, newLevel, finalVal);
+                                } else {
+                                    value = computeChessValue(chessBoard, role.nextRole());
+                                }
+
+                                // value = quietSearch(chessBoard, nextRole, finalVal, newLevel);
+                            }
+                            if (isAdjustDepth) {
+                                EXTEND_THINK_DEPTH = 0;
+                            }
                         }
+                    } else {
+                        value = role == Role.RED ? Integer.MIN_VALUE : Integer.MAX_VALUE;
                     }
 
                     if (role == Role.RED) {
@@ -172,10 +224,11 @@ public class GamePlayHigh {
                             if (value > finalVal) {
                                 posMap.clear();
                                 posMap.put(sourcePos, (int) targetPos);
+                                System.out.println("最新最好行棋： " + piece.getName() + " -- " + value + ", " + sourcePos + ":" + targetPos + ",  before val " + finalVal + ", after val " + value);
                             } else if (value == finalVal) {
                                 posMap.put(sourcePos, (int) targetPos);
                             }
-                            Log.e("LEVEL_1_VAL ",piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos);
+                            Log.e("LEVEL_1_VAL ",piece.getName() + " -- " + value + ", " + sourcePos + ":" + targetPos);
                         }
                         if (value > finalVal) {
                             bestRouteMap.put(level, PubTools.compress(sourcePos, targetPos));
@@ -190,14 +243,21 @@ public class GamePlayHigh {
 //                    if (valid1 && level == 3) {
 //                        sb1.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
 //                    }
+//
+//                    if (valid2 && level == 4) {
+//                        sb2.append("LEVEL is " + level + ",   " + piece.getName() + " ::: " + value + ", " + sourcePos + "  :::  " + targetPos).append("\n");
+//                    }
 
                     chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
                     boolean pruning = needPruning(role, parentVal, value);
-//                    if (level == 1 && sourcePos == 93 && targetPos == 84) {
+//                    if (level == 1 && sourcePos == 78 && targetPos == 86) {
 //                        valid = false;
 //                    }
-//                    if (valid && level == 2 && sourcePos == 21 && targetPos == 41) {
+//                    if (valid && level == 2 && sourcePos == 65 && targetPos == 86) {
 //                        valid1 = false;
+//                    }
+//                    if (valid1 && level == 3 && sourcePos == 98 && targetPos == 97) {
+//                        valid2 = false;
 //                    }
                     if (pruning) {
                         return role == Role.RED ? Conf.GAME_PLAY_MIN_VAL : Conf.GAME_PLAY_MAX_VAL;
@@ -208,16 +268,149 @@ public class GamePlayHigh {
         return finalVal;
     }
 
+    private int adjustExtendThinkPath(int level) {
+//        if (level == TMP_THINK_DEPTH - 1) {
+//            switch (Conf.DIFFICULTY_LEVEL) {
+//                case EASY:
+//                    return 2;
+//                case MID:
+//                    return 2;
+//                case HARD:
+//                    return 1;
+//                default:
+//                    return 0;
+//            }
+//        }
+        if (level == TMP_THINK_DEPTH) {
+            switch (Conf.DIFFICULTY_LEVEL) {
+                case EASY:
+                    return 3;
+                case MID:
+                    return 2;
+                case HARD:
+                    return 2;
+                default:
+                    return 0;
+            }
+        }
+
+        return 0;
+    }
+
+
+    private int quietSearch(ChessBoard chessBoard, Role role, int parentVal, int level) {
+        if (TMP_THINK_DEPTH < Conf.THINK_DEPTH) {
+            return computeChessValue(chessBoard, role.nextRole());
+        }
+        int finalVal = role == Role.RED ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+        AbstractChessPiece[][] pieceArr = chessBoard.getAllPiece();
+        byte[] singlePieceArr = role == Role.RED ? chessBoard.getRedPieceArr() : chessBoard.getBlackPieceArr();
+
+        for (int k = 0; k < singlePieceArr.length; k++) {
+            int sourcePos = singlePieceArr[k];
+            if (sourcePos == -1) {
+                continue;
+            }
+            int x = ChessTools.fetchX(sourcePos);
+            int y = ChessTools.fetchY(sourcePos);
+            AbstractChessPiece piece = pieceArr[x][y];
+            if (piece == null) {
+                continue;
+            }
+
+            byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false, level);
+            // 只保留吃的场景
+            retainEatCaseIfNecessary(chessBoard, reachablePositions, level);
+            byte size = reachablePositions[0];
+            if (size == 0) {
+                COUNT++;
+                finalVal = computeChessValue(chessBoard, role.nextRole());
+            } else {
+                for (int i = 1; i <= size; i++) {
+                    COUNT++;
+                    byte targetPos = reachablePositions[i];
+                    AbstractChessPiece eatenPiece = chessBoard.walk(sourcePos, targetPos);
+                    boolean isKingEaten = isKingEaten(eatenPiece);
+                    int value;
+                    if (!isKingEaten) {
+                        Role nextRole = role.nextRole();
+                        int newLevel = level + 1;
+                        maxLevel = Math.max(maxLevel, newLevel);
+                        value = computeChessValue(chessBoard, role.nextRole());
+                        boolean pruning = needPruning(role, parentVal, value);
+                        if (pruning) {
+                            chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
+                            return role == Role.RED ? Conf.GAME_PLAY_MIN_VAL : Conf.GAME_PLAY_MAX_VAL;
+                        }
+                        value = quietSearch(chessBoard, nextRole, finalVal, newLevel);
+                    } else {
+                        value = role == Role.RED ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+                    }
+
+                    if (role == Role.RED) {
+                        finalVal = Math.min(value, finalVal);
+                    } else {
+                        finalVal = Math.max(value, finalVal);
+                    }
+
+                    chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
+                    boolean pruning = needPruning(role, parentVal, value);
+                    if (pruning) {
+                        return role == Role.RED ? Conf.GAME_PLAY_MIN_VAL : Conf.GAME_PLAY_MAX_VAL;
+                    }
+                }
+            }
+        }
+        return finalVal;
+    }
+
+    private void topEatCase(byte[] reachablePositions, AbstractChessPiece[][] pieceArr) {
+        byte size = reachablePositions[0];
+        int eatIndex = 1;
+        for (int i = 1; i <= size; i++) {
+            byte reachablePosition = reachablePositions[i];
+            AbstractChessPiece piece = ChessTools.getPiece(pieceArr, reachablePosition);
+            if (piece != null) {
+                byte tmp = reachablePositions[eatIndex];
+                reachablePositions[eatIndex] = reachablePosition;
+                reachablePositions[i] = tmp;
+                eatIndex++;
+            }
+        }
+    }
+
+    private void retainEatCaseIfNecessary(ChessBoard chessBoard, byte[] reachablePositions, int level) {
+        if (level <= TMP_THINK_DEPTH) {
+            return;
+        }
+        int index = 1;
+        AbstractChessPiece[][] allPiece = chessBoard.getAllPiece();
+        byte len = reachablePositions[0];
+        for (int i = 1; i <= len; i++) {
+            AbstractChessPiece piece = ChessTools.getPiece(allPiece, reachablePositions[i]);
+            if (piece != null) {
+                byte type = piece.type();
+                if (type == 6 || type == 13 || type == 2 || type == 9 || type == 1 || type == 8) {
+                    reachablePositions[index++] = reachablePositions[i];
+                }
+            }
+        }
+        reachablePositions[0] = (byte) (index - 1);
+    }
+
     private boolean isKingEaten(AbstractChessPiece eatenPiece) {
         if (eatenPiece == null) {
             return false;
         }
-        String name = eatenPiece.getName();
-        return name.equals("帅") || name.equals("将");
+        byte type = eatenPiece.type();
+        return type == 5 || type == 12;
     }
 
     private void exchangeBestPositionToFirst(byte[] reachablePositions, int level) {
 //        if (1 == 1) {
+//            return;
+//        }
+//        if (level > TMP_THINK_DEPTH) {
 //            return;
 //        }
         Integer position = bestRouteMap.get(level);
@@ -236,7 +429,7 @@ public class GamePlayHigh {
         }
     }
 
-    private int sortPieceMap(AbstractChessPiece[][] pieceArr, int level) {
+    private int sortPieceMap(AbstractChessPiece[][] pieceArr, int level, Role role) {
 //        if (1 == 1) {
 //            return new HashMap<>(pieceMap);
 //        }
@@ -247,7 +440,9 @@ public class GamePlayHigh {
         int beginPos = PubTools.uncompressBegin(position);
         AbstractChessPiece piece = ChessTools.getPiece(pieceArr, beginPos);
         if (piece != null) {
-            return beginPos;
+            if (piece.getPLAYER_ROLE() == role) {
+                return beginPos;
+            }
         }
         return -1;
     }
@@ -263,8 +458,7 @@ public class GamePlayHigh {
             if (currVal < parentVal) {
                 return true;
             }
-        }
-        if (role == Role.BLACK) {
+        } else {
             if (currVal > parentVal) {
                 return true;
             }
@@ -276,9 +470,15 @@ public class GamePlayHigh {
      * 评估棋盘的价值
      *
      * @param chessBoard 棋盘
+     * @param role
      * @return  价值
      */
-    private int computeChessValue(ChessBoard chessBoard) {
+    public int computeChessValue(ChessBoard chessBoard, Role role) {
+        int hashCode = chessBoard.toHashCode();
+        Integer val = exchangeTableMap.get(hashCode);
+        if (val != null) {
+            return val;
+        }
         chessBoard.genericNextStepPositionMap();
         int totalValue = 0;
         AbstractChessPiece[][] allPiece = chessBoard.getAllPiece();
@@ -289,7 +489,7 @@ public class GamePlayHigh {
                 if (piece == null) {
                     continue;
                 }
-                int value = piece.valuation(chessBoard, position);
+                int value = piece.valuation(chessBoard, position, role);
                 if (piece.isRed()) {
                     totalValue -= value;
                 } else {
@@ -297,6 +497,7 @@ public class GamePlayHigh {
                 }
             }
         }
+        exchangeTableMap.put(hashCode, totalValue);
         return totalValue;
     }
 

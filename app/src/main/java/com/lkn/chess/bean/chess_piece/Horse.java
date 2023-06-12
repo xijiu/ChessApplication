@@ -33,16 +33,16 @@ public class Horse extends AbstractChessPiece {
 	 */
 	private void setValues() {
 		int[][] VAL_RED_TEMP = {	// 先手方的位置与权值加成
-				{  4,  8, 16, 12,  4, 12, 16,  8,  4},
-				{  4, 10, 28, 16,  8, 16, 28, 10,  4},
-				{ 12, 14, 16, 20, 18, 20, 16, 14, 12},
-				{  8, 24, 18, 24, 20, 24, 18, 24,  8},
-				{  6, 16, 14, 18, 16, 18, 14, 16,  6},
-				{  4, 12, 16, 14, 12, 14, 16, 12,  4},
-				{  2,  6,  8,  6, 10,  6,  8,  6,  2},
-				{  4,  2,  8,  8,  4,  8,  8,  2,  4},
-				{  0,  2,  4,  4,-20,  4,  4,  2,  0},
-				{  0, -4,  0,  0,  0,  0,  0, -4,  0}
+				{90, 90, 90, 96, 90, 96, 90, 90, 90},
+				{90, 96,103, 97, 94, 97,103, 96, 90},
+				{92, 98, 99,103, 99,103, 99, 98, 92},
+				{93,108,100,107,100,107,100,108, 93},
+				{90,100, 99,103,104,103, 99,100, 90},
+				{90, 98,101,102,103,102,101, 98, 90},
+				{92, 94, 98, 95, 98, 95, 98, 94, 92},
+				{93, 92, 94, 95, 92, 95, 94, 92, 93},
+				{85, 90, 92, 93, 78, 93, 92, 90, 85},
+				{88, 85, 90, 88, 90, 88, 90, 85, 88}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
@@ -51,6 +51,25 @@ public class Horse extends AbstractChessPiece {
 	@Override
 	public byte type() {
 		return (byte) (isRed() ? 2 : 9);
+	}
+
+	@Override
+	public boolean kingCheck(ChessBoard board, int position) {
+		int kingPos = findKingPos(board.getAllPiece(), getPLAYER_ROLE().nextRole());
+		int kingX = ChessTools.fetchX(kingPos);
+		int kingY = ChessTools.fetchY(kingPos);
+		int currX = ChessTools.fetchX(position);
+		int currY = ChessTools.fetchY(position);
+		AbstractChessPiece[][] pieceArr = board.getAllPiece();
+		if (Math.abs(kingX - currX) == 1 && Math.abs(kingY - currY) == 2) {
+			AbstractChessPiece piece = kingY > currY ? pieceArr[currX][currY + 1] : pieceArr[currX][currY - 1];
+			return piece == null;
+		}
+		if (Math.abs(kingX - currX) == 2 && Math.abs(kingY - currY) == 1) {
+			AbstractChessPiece piece = kingX > currX ? pieceArr[currX + 1][currY] : pieceArr[currX - 1][currY];
+			return piece == null;
+		}
+		return false;
 	}
 
 	@Override
@@ -174,16 +193,17 @@ public class Horse extends AbstractChessPiece {
 	}
 
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
 		if (Conf.SIMPLE_VALUE) {
-			return defaultVal + arr[x][y];
+			return arr[x][y];
 		}
 		byte num = getReachablePositions(position, board, true, 10)[0];
-		int eatenVal = eatenValue(board, position);
-		return Math.max(0, defaultVal + arr[x][y] + num * 10 - eatenVal);
+		int eatenVal = eatenValue(board, position, role);
+//		int eatenVal = 0;
+		return Math.max(0, arr[x][y] + num * 10 - eatenVal);
 	}
 
 

@@ -47,35 +47,5 @@ public class Position implements Cloneable {
 		}
 		return false;
 	}
-	
-	/**
-	 * 为该位置放置棋子
-	 * 如果放置的棋子为null，那么将existPiece变量设置为false，否则设置为true
-	 * @author:likn1	Jan 6, 2016  2:51:04 PM
-	 * @param piece
-	 */
-	public void setPiece(AbstractChessPiece piece) {
-		this.piece = piece;
-		if(piece == null){
-			this.existPiece = false;
-		}else {
-			this.existPiece = true;
-			if(!this.isSameXandY(piece.getCurrPosition())){
-				piece.setCurrPosition(this);	// 将该棋子对应的位置信息设为本类
-			}
-		}
-	}
-	
-	public Position clone(){
-		Position clone = null;
-		try {
-			clone = (Position)super.clone();
-			AbstractChessPiece clonePiece = clone.getPiece() == null ? null : clone.getPiece().cloneImpl(clone);
-			clone.setPiece(clonePiece);
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return clone;
-	}
 
 }

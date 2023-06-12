@@ -3,7 +3,7 @@ package com.lkn.chess.manual;
 import java.util.Arrays;
 
 public class BytesKey {
-    private final byte[] array;
+    private byte[] array;
 
     public BytesKey(byte[] array) {
         this.array = array;
@@ -11,6 +11,11 @@ public class BytesKey {
 
     public byte[] getArray() {
         return array.clone();
+    }
+
+    public BytesKey setArray(byte[] array) {
+        this.array = array;
+        return this;
     }
 
     @Override

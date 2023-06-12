@@ -43,11 +43,11 @@ public class Elephants extends AbstractChessPiece {
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,-10,  0,  0,  0,-10,  0,  0},
+				{  0,  0, 20,  0,  0,  0, 20,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{ -10, 0,  0,  0, 20,  0,  0,  0,  -10},
+				{ 18,  0,  0,  0, 23,  0,  0,  0,  18},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
-				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
+				{  0,  0, 20,  0,  0,  0, 20,  0,  0}
 			};
 		VAL_BLACK = VAL_RED_TEMP;
 		VAL_RED = PubTools.arrChessReverse(VAL_BLACK);	// 后手方的位置与权值加成
@@ -59,15 +59,21 @@ public class Elephants extends AbstractChessPiece {
 	}
 
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
 		if (Conf.SIMPLE_VALUE) {
-			return defaultVal + arr[x][y];
+			return arr[x][y];
 		}
-		int eatenVal = eatenValue(board, position);
-		return Math.max(0, defaultVal + arr[x][y] - eatenVal);
+		int eatenVal = eatenValue(board, position, role);
+//		int eatenVal = 0;
+		return Math.max(0, arr[x][y] - eatenVal);
+	}
+
+	@Override
+	public boolean kingCheck(ChessBoard board, int position) {
+		return false;
 	}
 
 	@Override

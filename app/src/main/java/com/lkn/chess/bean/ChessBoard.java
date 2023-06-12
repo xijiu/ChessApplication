@@ -2,6 +2,8 @@ package com.lkn.chess.bean;
 
 import com.lkn.chess.BitArray;
 import com.lkn.chess.ChessTools;
+import com.lkn.chess.GamePlayHigh;
+import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 import com.lkn.chess.bean.chess_piece.Cannons;
 import com.lkn.chess.bean.chess_piece.Elephants;
@@ -12,11 +14,8 @@ import com.lkn.chess.bean.chess_piece.Pawns;
 import com.lkn.chess.bean.chess_piece.Rooks;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 棋盘的实体bean
@@ -27,17 +26,13 @@ public class ChessBoard {
 	private Map<String, Position> positionMap = new HashMap<>(90); // 位置的map
 	/** 存放全量的旗子，key为旗子的位置，val是对象 */
 	private AbstractChessPiece[][] allPiece = new AbstractChessPiece[10][9];
-	private AbstractChessPiece[][] redPiece = new AbstractChessPiece[10][9];
-	private AbstractChessPiece[][] blackPiece = new AbstractChessPiece[10][9];
+	private byte[] redPieceArr = new byte[16];
+	private int redPieceArrIndex = 0;
+	private byte[] blackPieceArr = new byte[16];
+	private int blackPieceArrIndex = 0;
 	private static final int nextStepLen = 99;
 	private int[][] redNextStepPositionArr = new int[nextStepLen][15];
 	private int[][] blackNextStepPositionArr = new int[nextStepLen][15];
-
-	public ChessBoard() {
-//		for (int i = 0; i < 90; i++) {
-//			nextStepPositionArr.add(new int[25]);
-//		}
-	}
 
 	/** 10行9列的棋盘 */
 	private final byte[][] board = new byte[10][9];
@@ -82,7 +77,7 @@ public class ChessBoard {
 	}
 
 	private boolean hasPiece(AbstractChessPiece[][] arr, int position) {
-		AbstractChessPiece piece = arr[ChessTools.fetchX(position)][ChessTools.fetchY(position)];
+		AbstractChessPiece piece = arr[position / 10][position % 10];
 		return piece != null;
 	}
 
@@ -144,6 +139,18 @@ public class ChessBoard {
 		return bitArray.toByteArray();
 	}
 
+	private byte[] tmpByte = new byte[90];
+	public int toHashCode() {
+		int index = 0;
+		for (int x = 0; x < 10; x++) {
+			for (int y = 0; y < 9; y++) {
+				AbstractChessPiece piece = allPiece[x][y];
+				tmpByte[index++] = piece != null ? piece.type() : -1;
+			}
+		}
+		return Arrays.hashCode(tmpByte);
+	}
+
 	public byte[] snapshotConvert() {
 		BitArray bitArray = new BitArray(218);
 		int index = 0;
@@ -186,8 +193,8 @@ public class ChessBoard {
 	 */
 	public void init() {
 		initArr(allPiece);
-		initArr(redPiece);
-		initArr(blackPiece);
+		redPieceArrIndex = 0;
+		blackPieceArrIndex = 0;
 
 		initBoard();
 //		initForTest();
@@ -197,55 +204,17 @@ public class ChessBoard {
 		for (AbstractChessPiece[] abstractChessPieces : arr) {
 			Arrays.fill(abstractChessPieces, null);
 		}
+		Arrays.fill(redPieceArr, (byte) -1);
+		Arrays.fill(blackPieceArr, (byte) -1);
 	}
 
 	private void initForTest() {
-		putPiece(0, new Rooks(Role.RED));
-//		putPiece(1, new Horse(Role.RED));
-//		putPiece(2, new Elephants(Role.RED));
-//		putPiece(3, new Mandarins(Role.RED));
-		putPiece(4, new King(Role.RED));
-		putPiece(5, new Mandarins(Role.RED));
-		putPiece(6, new Elephants(Role.RED));
-		putPiece(7, new Horse(Role.RED));
-//		putPiece(8, new Rooks(Role.RED));
-
-
-		putPiece(21, new Cannons(Role.RED));
-		putPiece(27, new Cannons(Role.RED));
-
-
-//		putPiece(30, new Pawns(Role.RED));
-//		putPiece(32, new Pawns(Role.RED));
-		putPiece(34, new Pawns(Role.RED));
-		putPiece(36, new Pawns(Role.RED));
-//		putPiece(38, new Pawns(Role.RED));
-
-
-		// --------------------------以下是后手的旗子----------------------------
-
-
-//		putPiece(60, new Pawns(Role.BLACK));
-//		putPiece(62, new Pawns(Role.BLACK));
-		putPiece(64, new Pawns(Role.BLACK));
-		putPiece(66, new Pawns(Role.BLACK));
-//		putPiece(68, new Pawns(Role.BLACK));
-
-
-		putPiece(71, new Cannons(Role.BLACK));
-		putPiece(77, new Cannons(Role.BLACK));
-
-
-//		putPiece(90, new Rooks(Role.BLACK));
-//		putPiece(91, new Horse(Role.BLACK));
-//		putPiece(92, new Elephants(Role.BLACK));
-//		putPiece(93, new Mandarins(Role.BLACK));
-		putPiece(94, new King(Role.BLACK));
-		putPiece(95, new Mandarins(Role.BLACK));
-		putPiece(96, new Elephants(Role.BLACK));
-		putPiece(97, new Horse(Role.BLACK));
-		putPiece(98, new Rooks(Role.BLACK));
+//		loadPieceFromStr("0_0_3_0_5_4_0_0_13_0_0_0_0_4_0_0_0_0_2_0_6_0_3_0_0_0_0_0_0_0_0_0_0_7_0_0_7_0_0_8_0_0_0_0_0_0_0_0_0_0_1_0_0_14_0_0_7_0_0_2_9_0_0_0_0_0_0_10_0_0_0_0_0_0_0_0_9_0_0_0_0_0_0_10_11_12_11_0_0_0");
+		loadPieceFromStr("0_0_3_0_5_4_3_0_13_0_0_0_0_4_0_0_0_0_2_0_6_0_0_0_0_0_0_0_0_0_0_0_0_7_0_0_7_0_0_8_0_0_0_0_0_0_0_0_0_0_1_0_0_14_0_0_7_0_0_2_0_0_0_0_0_0_0_10_0_0_0_9_0_0_0_0_9_0_0_0_0_0_0_10_11_12_11_0_0_0");
+//		int val = new GamePlayHigh().computeChessValue(this, Role.RED);
+//		System.out.println("val is val is " + val);
 	}
+
 
 	private void initBoard() {
 		putPiece(0, new Rooks(Role.RED));
@@ -299,9 +268,13 @@ public class ChessBoard {
 		setPieceToBoard(position, piece);
 		ChessTools.putPiece(allPiece, position, piece);
 		if (piece.isRed()) {
-			ChessTools.putPiece(redPiece, position, piece);
+			redPieceArr[redPieceArrIndex] = (byte) position;
+			piece.setPieceIndex(redPieceArrIndex);
+			redPieceArrIndex++;
 		} else {
-			ChessTools.putPiece(blackPiece, position, piece);
+			blackPieceArr[blackPieceArrIndex] = (byte) position;
+			piece.setPieceIndex(blackPieceArrIndex);
+			blackPieceArrIndex++;
 		}
 	}
 
@@ -344,9 +317,8 @@ public class ChessBoard {
 	private void addPiece(AbstractChessPiece piece, int position) {
 		ChessTools.putPiece(allPiece, position, piece);
 
-		AbstractChessPiece[][] arr = piece.isRed() ? redPiece : blackPiece;
-		ChessTools.putPiece(arr, position, piece);
-
+		byte[] pieceArr = piece.isRed() ? redPieceArr : blackPieceArr;
+		pieceArr[piece.getPieceIndex()] = (byte) position;
 	}
 
 	/**
@@ -357,11 +329,12 @@ public class ChessBoard {
 	 * @return	如果发生了吃子儿行为，那么返回吃掉的子儿，否则返回null
 	 */
 	public AbstractChessPiece walk(int sourcePosition, int targetPosition) {
-		AbstractChessPiece piece = ChessTools.getPiece(allPiece, sourcePosition);
 		AbstractChessPiece targetPiece = ChessTools.getPiece(allPiece, targetPosition);
 		if (targetPiece != null) {
 			removePiece(targetPosition);
 		}
+
+		AbstractChessPiece piece = ChessTools.getPiece(allPiece, sourcePosition);
 		changePiecePosition(piece, sourcePosition, targetPosition);
 		return targetPiece;
 	}
@@ -372,10 +345,13 @@ public class ChessBoard {
 	 * @param removePosition	目标位置
 	 */
 	private void removePiece(int removePosition) {
-		AbstractChessPiece piece = ChessTools.removePiece(allPiece, removePosition);
+		AbstractChessPiece removePiece = ChessTools.removePiece(allPiece, removePosition);
 
-		AbstractChessPiece[][] arr = piece.isRed() ? redPiece : blackPiece;
-		ChessTools.removePiece(arr, removePosition);
+		if (removePiece.isRed()) {
+			redPieceArr[removePiece.getPieceIndex()] = -1;
+		} else {
+			blackPieceArr[removePiece.getPieceIndex()] = -1;
+		}
 	}
 
 	/**
@@ -389,27 +365,8 @@ public class ChessBoard {
 		ChessTools.removePiece(allPiece, sourcePosition);
 		ChessTools.putPiece(allPiece, targetPosition, piece);
 
-		AbstractChessPiece[][] arr = piece.isRed() ? redPiece : blackPiece;
-		ChessTools.removePiece(arr, sourcePosition);
-		ChessTools.putPiece(arr, targetPosition, piece);
-	}
-
-
-	/**
-	 * 获取某一角色角色下的所有棋子
-	 * 
-	 * @param role
-	 * @return
-	 */
-	public Set<AbstractChessPiece> getPiecesByPlayRole(Role role) {
-		Set<AbstractChessPiece> set = new HashSet<>();
-		Collection<Position> collection = positionMap.values();
-		for (Position position : collection) {
-			if (position.isExistPiece() && position.getPiece().getPLAYER_ROLE().equals(role) && position.getPiece().isAlive()) {
-				set.add(position.getPiece());
-			}
-		}
-		return set;
+		byte[] pieceArr = piece.isRed() ? redPieceArr : blackPieceArr;
+		pieceArr[piece.getPieceIndex()] = (byte) targetPosition;
 	}
 
 	public void print() {
@@ -426,15 +383,57 @@ public class ChessBoard {
 		}
 	}
 
+	public void boardPrintToConsole() {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 0; x < 10; x++) {
+			for (int y = 0; y < 9; y++) {
+				AbstractChessPiece piece = allPiece[x][y];
+				if (piece != null) {
+					sb.append(piece.type());
+				} else {
+					sb.append("0");
+				}
+				sb.append("_");
+			}
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		System.out.println(sb.toString());
+	}
+
+	public void loadPieceFromStr(String str) {
+		String[] strArr = str.split("_");
+		int index = 0;
+		for (int x = 0; x < 10; x++) {
+			for (int y = 0; y < 9; y++) {
+				int type = Integer.parseInt(String.valueOf(strArr[index++]));
+				if (type == 0) {
+					allPiece[x][y] = null;
+				} else {
+					AbstractChessPiece piece = ChessTools.toPiece(type);
+					putPiece(ChessTools.toPosition(x, y), piece);
+				}
+			}
+		}
+	}
+
+
 	public AbstractChessPiece[][] getAllPiece() {
 		return allPiece;
 	}
 
-	public AbstractChessPiece[][] getRedPiece() {
-		return redPiece;
+	public byte[] getRedPieceArr() {
+		return redPieceArr;
 	}
 
-	public AbstractChessPiece[][] getBlackPiece() {
-		return blackPiece;
+	public void setRedPieceArr(byte[] redPieceArr) {
+		this.redPieceArr = redPieceArr;
+	}
+
+	public byte[] getBlackPieceArr() {
+		return blackPieceArr;
+	}
+
+	public void setBlackPieceArr(byte[] blackPieceArr) {
+		this.blackPieceArr = blackPieceArr;
 	}
 }

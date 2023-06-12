@@ -40,13 +40,13 @@ public class Pawns extends AbstractChessPiece {
 	 */
 	private void setValues() {
 		int[][] VAL_RED_TEMP = {	// 先手方的位置与权值加成
-				{  0,  3,  6,  9, 12,  9,  6,  3,  0},
-				{ 18, 36, 56, 80,120, 80, 56, 36, 18},
-				{ 14, 26, 42, 60, 80, 60, 42, 26, 14},
-				{ 10, 20, 30, 34, 40, 34, 30, 20, 10},
-				{ 10, 12, 18, 18, 20, 18, 18, 12, 10},
-				{  6,  0,  8,  0, 10,  0,  8,  0,  6},
-				{  6,  0,  8,  0, 10,  0,  8,  0,  6},
+				{  9,  9,  9, 11, 13, 11,  9,  9,  9},
+				{ 19, 24, 34, 42, 44, 42, 34, 24, 19},
+				{ 19, 24, 32, 37, 37, 37, 32, 24, 19},
+				{ 19, 23, 27, 29, 30, 29, 27, 23, 19},
+				{ 14, 18, 20, 27, 29, 27, 20, 18, 14},
+				{  7,  0, 13,  0, 16,  0, 13,  0,  7},
+				{  7,  0,  7,  0, 15,  0,  7,  0,  7},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0},
 				{  0,  0,  0,  0,  0,  0,  0,  0,  0}
@@ -61,16 +61,51 @@ public class Pawns extends AbstractChessPiece {
 	}
 
 	@Override
-	public int valuation(ChessBoard board, int position) {
+	public int valuation(ChessBoard board, int position, Role role) {
 		int[][] arr = this.isRed() ? VAL_RED : VAL_BLACK;
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
 		if (Conf.SIMPLE_VALUE) {
-			return defaultVal + arr[x][y];
+			return arr[x][y];
 		}
 
-		int eatenVal = eatenValue(board, position);
-		return Math.max(0, defaultVal + arr[x][y] - eatenVal);
+		int eatenVal = eatenValue(board, position, role);
+//		int eatenVal = 0;
+		return Math.max(0, arr[x][y] - eatenVal);
+	}
+
+	@Override
+	public boolean kingCheck(ChessBoard board, int position) {
+		int currX = ChessTools.fetchX(position);
+		int currY = ChessTools.fetchY(position);
+		if (isRed()) {
+			if ((currY >= 2 && currY <= 6 && currX >= 7)
+					|| (currY >= 3 && currY <= 5 && currX == 6)) {
+				int kingPos = findKingPos(board.getAllPiece(), getPLAYER_ROLE().nextRole());
+				int kingX = ChessTools.fetchX(kingPos);
+				int kingY = ChessTools.fetchY(kingPos);
+				if (kingY == currY && kingX - currX == 1) {
+					return true;
+				}
+				if (kingX == currX && Math.abs(kingY - currY) == 1) {
+					return true;
+				}
+			}
+		} else {
+			if ((currY >= 2 && currY <= 6 && currX <= 2)
+					|| (currY >= 3 && currY <= 5 && currX == 3)) {
+				int kingPos = findKingPos(board.getAllPiece(), getPLAYER_ROLE().nextRole());
+				int kingX = ChessTools.fetchX(kingPos);
+				int kingY = ChessTools.fetchY(kingPos);
+				if (kingY == currY && currX - kingX == 1) {
+					return true;
+				}
+				if (kingX == currX && Math.abs(kingY - currY) == 1) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
