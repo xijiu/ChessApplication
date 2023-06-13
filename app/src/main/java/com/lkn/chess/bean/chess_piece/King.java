@@ -10,8 +10,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class King extends AbstractChessPiece {
-	public static final int RED_NUM = 5;
-	public static final int BLACK_NUM = 14;
+	public static final int RED_TYPE = 5;
+	public static final int BLACK_TYPE = 12;
 
 	public King(Role role) {
 		this(null, role);
@@ -28,7 +28,7 @@ public class King extends AbstractChessPiece {
 			this.setName("将");
 			this.setShowName("将");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 
 	}
 	
@@ -55,7 +55,7 @@ public class King extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 5 : 12);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -96,12 +96,12 @@ public class King extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
 
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void findReachablePositions(int currX, int currY, byte[][] allPiece, boolean containsProtectedPiece) {
 		int enemyKingPos = findKingPos(allPiece, getPLAYER_ROLE().nextRole());
 		int enemyKingX = ChessTools.fetchX(enemyKingPos);
 		int enemyKingY = ChessTools.fetchY(enemyKingPos);
@@ -137,7 +137,7 @@ public class King extends AbstractChessPiece {
 		}
 	}
 
-	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece, int enemyKingX, int enemyKingY) {
+	private void tryReach(int x, int y, byte[][] allPiece, boolean containsProtectedPiece, int enemyKingX, int enemyKingY) {
 		if (isInArea(x, y)) {
 			// 两个老头不能见面
 			if (enemyKingY == y) {
@@ -145,7 +145,7 @@ public class King extends AbstractChessPiece {
 				int minX = Math.min(x, enemyKingX);
 				int maxX = Math.max(x, enemyKingX);
 				for (int tmpX = minX + 1; tmpX < maxX; tmpX++) {
-					if (allPiece[tmpX][y] != null) {
+					if (allPiece[tmpX][y] != -1) {
 						empty = false;
 						break;
 					}
@@ -154,11 +154,11 @@ public class King extends AbstractChessPiece {
 					return;
 				}
 			}
-			AbstractChessPiece piece = allPiece[x][y];
-			if (piece == null || isEnemy(this, piece)) {
+			byte type = allPiece[x][y];
+			if (type == -1 || isEnemy(this, type)) {
 				recordReachablePosition(ChessTools.toPosition(x, y));
 			}
-			if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+			if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 				recordReachablePosition(ChessTools.toPosition(x, y));
 			}
 		}

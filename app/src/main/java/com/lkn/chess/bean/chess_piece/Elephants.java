@@ -11,8 +11,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Elephants extends AbstractChessPiece {
-	public static final int RED_NUM = 3;
-	public static final int BLACK_NUM = 12;
+	public static final int RED_TYPE = 3;
+	public static final int BLACK_TYPE = 10;
 
 	public Elephants(Role role) {
 		this(null, role);
@@ -29,7 +29,7 @@ public class Elephants extends AbstractChessPiece {
 			this.setName("象");
 			this.setShowName("象");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 	}
 	
 	/**
@@ -55,7 +55,7 @@ public class Elephants extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 3 : 10);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class Elephants extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
@@ -119,16 +119,16 @@ public class Elephants extends AbstractChessPiece {
 	/**
 	 * 检查4个点，并查看是否堵象眼了
 	 */
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void findReachablePositions(int currX, int currY, byte[][] board, boolean containsProtectedPiece) {
 		int tmpX = currX - 2;
 		int tmpY = currY - 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (allPiece[currX - 1][currY - 1] == null) {
-				AbstractChessPiece piece = allPiece[tmpX][tmpY];
-				if (piece == null || isEnemy(this, piece)) {
+			if (board[currX - 1][currY - 1] == -1) {
+				byte type = board[tmpX][tmpY];
+				if (type == -1 || isEnemy(this, type)) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
-				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+				if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -137,12 +137,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX + 2;
 		tmpY = currY + 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (allPiece[currX + 1][currY + 1] == null) {
-				AbstractChessPiece piece = allPiece[tmpX][tmpY];
-				if (piece == null || isEnemy(this, piece)) {
+			if (board[currX + 1][currY + 1] == -1) {
+				byte type = board[tmpX][tmpY];
+				if (type == -1 || isEnemy(this, type)) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
-				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+				if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -151,12 +151,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX - 2;
 		tmpY = currY + 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (allPiece[currX - 1][currY + 1] == null) {
-				AbstractChessPiece piece = allPiece[tmpX][tmpY];
-				if (piece == null || isEnemy(this, piece)) {
+			if (board[currX - 1][currY + 1] == -1) {
+				byte type = board[tmpX][tmpY];
+				if (type == -1 || isEnemy(this, type)) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
-				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+				if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}
@@ -166,12 +166,12 @@ public class Elephants extends AbstractChessPiece {
 		tmpX = currX + 2;
 		tmpY = currY - 2;
 		if (isValid(tmpX, tmpY) && isInOwnArea(tmpX)) {
-			if (allPiece[currX + 1][currY - 1] == null) {
-				AbstractChessPiece piece = allPiece[tmpX][tmpY];
-				if (piece == null || isEnemy(this, piece)) {
+			if (board[currX + 1][currY - 1] == -1) {
+				byte type = board[tmpX][tmpY];
+				if (type == -1 || isEnemy(this, type)) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
-				if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+				if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(tmpX, tmpY));
 				}
 			}

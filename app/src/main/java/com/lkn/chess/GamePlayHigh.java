@@ -4,17 +4,24 @@ import android.util.Log;
 import com.lkn.chess.bean.ChessBoard;
 import com.lkn.chess.bean.Role;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
+import com.lkn.chess.bean.chess_piece.Cannons;
+import com.lkn.chess.bean.chess_piece.Elephants;
+import com.lkn.chess.bean.chess_piece.Horse;
+import com.lkn.chess.bean.chess_piece.King;
+import com.lkn.chess.bean.chess_piece.Mandarins;
+import com.lkn.chess.bean.chess_piece.Pawns;
+import com.lkn.chess.bean.chess_piece.Rooks;
 import com.lkn.chess.manual.BytesKey;
 import com.lkn.chess.manual.Manual;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.lkn.chess.DifficultyLevel.EASY;
 
 /**
  * 默认电脑是黑方
@@ -48,7 +55,7 @@ public class GamePlayHigh {
             to = PubTools.uncompressEnd(multiPos);
         } else {
             maxLevel = -1;
-            for (int i = 2; i <= Conf.THINK_DEPTH; i++) {
+            for (int i = Conf.THINK_DEPTH; i <= Conf.THINK_DEPTH; i++) {
                 TMP_THINK_DEPTH = i;
                 posMap.clear();
                 exchangeTableMap.clear();
@@ -157,7 +164,7 @@ public class GamePlayHigh {
             byte[] reachablePositions = piece.getReachablePositions(sourcePos, chessBoard, false, level);
             // 只保留吃的场景
 //            retainEatCaseIfNecessary(chessBoard, reachablePositions, level);
-            topEatCase(reachablePositions, pieceArr);
+            topEatCase(reachablePositions, chessBoard.getBoard());
             exchangeBestPositionToFirst(reachablePositions, level);
             byte size = reachablePositions[0];
             if (size == 0) {
@@ -167,13 +174,13 @@ public class GamePlayHigh {
                 for (int i = 1; i <= size; i++) {
                     COUNT++;
                     byte targetPos = reachablePositions[i];
-//                    if (level == 1 && sourcePos == 78 && targetPos == 86) {
+//                    if (level == 1 && sourcePos == 23 && targetPos == 24) {
 //                        valid = true;
 //                    }
-//                    if (valid && level == 2 && sourcePos == 65 && targetPos == 86) {
+//                    if (valid && level == 2 && sourcePos == 2 && targetPos == 24) {
 //                        valid1 = true;
 //                    }
-//                    if (valid && valid1 && level == 3 && sourcePos == 98 && targetPos == 97) {
+//                    if (valid && valid1 && level == 3 && sourcePos == 71 && targetPos == 21) {
 //                        valid2 = true;
 //                    }
                     AbstractChessPiece eatenPiece = chessBoard.walk(sourcePos, targetPos);
@@ -250,13 +257,13 @@ public class GamePlayHigh {
 
                     chessBoard.unWalk(sourcePos, targetPos, eatenPiece);
                     boolean pruning = needPruning(role, parentVal, value);
-//                    if (level == 1 && sourcePos == 78 && targetPos == 86) {
+//                    if (level == 1 && sourcePos == 23 && targetPos == 24) {
 //                        valid = false;
 //                    }
-//                    if (valid && level == 2 && sourcePos == 65 && targetPos == 86) {
+//                    if (valid && level == 2 && sourcePos == 2 && targetPos == 24) {
 //                        valid1 = false;
 //                    }
-//                    if (valid1 && level == 3 && sourcePos == 98 && targetPos == 97) {
+//                    if (valid1 && level == 3 && sourcePos == 71 && targetPos == 21) {
 //                        valid2 = false;
 //                    }
                     if (pruning) {
@@ -269,18 +276,18 @@ public class GamePlayHigh {
     }
 
     private int adjustExtendThinkPath(int level) {
-//        if (level == TMP_THINK_DEPTH - 1) {
-//            switch (Conf.DIFFICULTY_LEVEL) {
-//                case EASY:
-//                    return 2;
-//                case MID:
-//                    return 2;
-//                case HARD:
-//                    return 1;
-//                default:
-//                    return 0;
-//            }
-//        }
+        if (level == TMP_THINK_DEPTH - 1) {
+            switch (Conf.DIFFICULTY_LEVEL) {
+                case EASY:
+                    return 2;
+                case MID:
+                    return 1;
+                case HARD:
+                    return 1;
+                default:
+                    return 0;
+            }
+        }
         if (level == TMP_THINK_DEPTH) {
             switch (Conf.DIFFICULTY_LEVEL) {
                 case EASY:
@@ -288,7 +295,7 @@ public class GamePlayHigh {
                 case MID:
                     return 2;
                 case HARD:
-                    return 2;
+                    return 1;
                 default:
                     return 0;
             }
@@ -364,19 +371,53 @@ public class GamePlayHigh {
         return finalVal;
     }
 
-    private void topEatCase(byte[] reachablePositions, AbstractChessPiece[][] pieceArr) {
+    private void topEatCase(byte[] reachablePositions, byte[][] board) {
         byte size = reachablePositions[0];
         int eatIndex = 1;
         for (int i = 1; i <= size; i++) {
             byte reachablePosition = reachablePositions[i];
-            AbstractChessPiece piece = ChessTools.getPiece(pieceArr, reachablePosition);
-            if (piece != null) {
+            byte type = board[ChessTools.fetchX(reachablePosition)][ChessTools.fetchY(reachablePosition)];
+            if (type != -1) {
                 byte tmp = reachablePositions[eatIndex];
                 reachablePositions[eatIndex] = reachablePosition;
                 reachablePositions[i] = tmp;
                 eatIndex++;
             }
         }
+        sortEatPiece(reachablePositions, eatIndex, board);
+    }
+
+    private static byte[] RED_SORT_ARR = {King.RED_TYPE, Rooks.RED_TYPE, Cannons.RED_TYPE, Horse.RED_TYPE, Mandarins.RED_TYPE, Elephants.RED_TYPE, Pawns.RED_TYPE};
+    private static byte[] BLACK_SORT_ARR = {King.BLACK_TYPE, Rooks.BLACK_TYPE, Cannons.BLACK_TYPE, Horse.BLACK_TYPE, Mandarins.BLACK_TYPE, Elephants.BLACK_TYPE, Pawns.BLACK_TYPE};
+
+    private void sortEatPiece(byte[] reachablePositions, int eatIndex, byte[][] board) {
+        if (eatIndex <= 2) {
+            return;
+        }
+
+        byte[] arr;
+        byte type = queryType(board, reachablePositions[1]);
+        if (type <= 7) {
+            arr = RED_SORT_ARR;
+        } else {
+            arr = BLACK_SORT_ARR;
+        }
+
+        int index = 1;
+        for (byte redType : arr) {
+            for (int i = index; i < eatIndex; i++) {
+                if (queryType(board, reachablePositions[i]) == redType) {
+                    byte tmp = reachablePositions[index];
+                    reachablePositions[index] = reachablePositions[i];
+                    reachablePositions[i] = tmp;
+                    index++;
+                }
+            }
+        }
+    }
+
+    private byte queryType(byte[][] board, byte pos) {
+        return board[ChessTools.fetchX(pos)][ChessTools.fetchY(pos)];
     }
 
     private void retainEatCaseIfNecessary(ChessBoard chessBoard, byte[] reachablePositions, int level) {
@@ -474,11 +515,11 @@ public class GamePlayHigh {
      * @return  价值
      */
     public int computeChessValue(ChessBoard chessBoard, Role role) {
-        int hashCode = chessBoard.toHashCode();
-        Integer val = exchangeTableMap.get(hashCode);
-        if (val != null) {
-            return val;
-        }
+//        int hashCode = chessBoard.toHashCode();
+//        Integer val = exchangeTableMap.get(hashCode);
+//        if (val != null) {
+//            return val;
+//        }
         chessBoard.genericNextStepPositionMap();
         int totalValue = 0;
         AbstractChessPiece[][] allPiece = chessBoard.getAllPiece();
@@ -497,7 +538,7 @@ public class GamePlayHigh {
                 }
             }
         }
-        exchangeTableMap.put(hashCode, totalValue);
+//        exchangeTableMap.put(hashCode, totalValue);
         return totalValue;
     }
 

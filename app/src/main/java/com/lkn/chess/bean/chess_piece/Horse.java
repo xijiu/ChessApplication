@@ -11,8 +11,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:54:47 PM
  */
 public class Horse extends AbstractChessPiece {
-	public static final int RED_NUM = 2;
-	public static final int BLACK_NUM = 11;
+	public static final int RED_TYPE = 2;
+	public static final int BLACK_TYPE = 9;
 
 	public Horse(Role role) {
 		this(null, role);
@@ -24,7 +24,7 @@ public class Horse extends AbstractChessPiece {
 		this.setDefaultVal(220);
 		this.setName("马");
 		this.setShowName("馬");
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 	}
 	
 	/**
@@ -50,7 +50,7 @@ public class Horse extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 2 : 9);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -60,14 +60,14 @@ public class Horse extends AbstractChessPiece {
 		int kingY = ChessTools.fetchY(kingPos);
 		int currX = ChessTools.fetchX(position);
 		int currY = ChessTools.fetchY(position);
-		AbstractChessPiece[][] pieceArr = board.getAllPiece();
+		byte[][] boardArr = board.getBoard();
 		if (Math.abs(kingX - currX) == 1 && Math.abs(kingY - currY) == 2) {
-			AbstractChessPiece piece = kingY > currY ? pieceArr[currX][currY + 1] : pieceArr[currX][currY - 1];
-			return piece == null;
+			byte type = kingY > currY ? boardArr[currX][currY + 1] : boardArr[currX][currY - 1];
+			return type == -1;
 		}
 		if (Math.abs(kingX - currX) == 2 && Math.abs(kingY - currY) == 1) {
-			AbstractChessPiece piece = kingX > currX ? pieceArr[currX + 1][currY] : pieceArr[currX - 1][currY];
-			return piece == null;
+			byte type = kingX > currX ? boardArr[currX + 1][currY] : boardArr[currX - 1][currY];
+			return type == -1;
 		}
 		return false;
 	}
@@ -119,7 +119,7 @@ public class Horse extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
@@ -127,65 +127,65 @@ public class Horse extends AbstractChessPiece {
 	/**
 	 * 8个方向均需要检查
 	 */
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void findReachablePositions(int currX, int currY, byte[][] board, boolean containsProtectedPiece) {
 		int targetX = currX - 1;
 		int targetY = currY - 2;
 		int legX = currX;
 		int legY = currY - 1;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX + 1;
 		targetY = currY + 2;
 		legX = currX;
 		legY = currY + 1;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX - 2;
 		targetY = currY - 1;
 		legX = currX - 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX + 2;
 		targetY = currY + 1;
 		legX = currX + 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX - 1;
 		targetY = currY + 2;
 		legX = currX;
 		legY = currY + 1;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX - 2;
 		targetY = currY + 1;
 		legX = currX - 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX + 1;
 		targetY = currY - 2;
 		legX = currX;
 		legY = currY - 1;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 
 		targetX = currX + 2;
 		targetY = currY - 1;
 		legX = currX + 1;
 		legY = currY;
-		tryJump(targetX, targetY, legX, legY, allPiece, containsProtectedPiece);
+		tryJump(targetX, targetY, legX, legY, board, containsProtectedPiece);
 	}
 
-	private void tryJump(int targetX, int targetY, int legX, int legY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void tryJump(int targetX, int targetY, int legX, int legY, byte[][] board, boolean containsProtectedPiece) {
 		if (isValid(targetX, targetY) && isValid(legX, legY)) {
 			// 不拌马腿
-			if (allPiece[legX][legY] == null) {
-				AbstractChessPiece targetPiece = allPiece[targetX][targetY];
-				if (targetPiece == null || isEnemy(this, targetPiece)) {
+			if (board[legX][legY] == -1) {
+				byte type = board[targetX][targetY];
+				if (type == -1 || isEnemy(this, type)) {
 					recordReachablePosition(ChessTools.toPosition(targetX, targetY));
 				}
-				if (targetPiece != null && isFriend(this, targetPiece) && containsProtectedPiece) {
+				if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 					recordReachablePosition(ChessTools.toPosition(targetX, targetY));
 				}
 			}

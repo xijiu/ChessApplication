@@ -151,8 +151,24 @@ public abstract class AbstractChessPiece implements Cloneable {
 		return piece1.getPLAYER_ROLE() != piece2.getPLAYER_ROLE();
 	}
 
+	protected boolean isEnemy(AbstractChessPiece piece, byte type) {
+		if (piece.isRed()) {
+			return type > 7;
+		} else {
+			return type > 0 && type <= 7;
+		}
+	}
+
 	protected boolean isFriend(AbstractChessPiece piece1, AbstractChessPiece piece2) {
 		return piece1.getPLAYER_ROLE() == piece2.getPLAYER_ROLE();
+	}
+
+	protected boolean isFriend(AbstractChessPiece piece, byte type) {
+		if (piece.isRed()) {
+			return type > 0 && type <= 7;
+		} else {
+			return type > 7;
+		}
 	}
 
 	/**
@@ -207,7 +223,7 @@ public abstract class AbstractChessPiece implements Cloneable {
 			for (int x = 0; x < 3; x++) {
 				for (int y = 3; y <= 5; y++) {
 					AbstractChessPiece piece = allPiece[x][y];
-					if (piece != null && piece.type() == 5) {
+					if (piece != null && piece.type() == King.RED_TYPE) {
 						return ChessTools.toPosition(x, y);
 					}
 				}
@@ -216,7 +232,33 @@ public abstract class AbstractChessPiece implements Cloneable {
 			for (int x = 7; x <= 9; x++) {
 				for (int y = 3; y <= 5; y++) {
 					AbstractChessPiece piece = allPiece[x][y];
-					if (piece != null && piece.type() == 12) {
+					if (piece != null && piece.type() == King.BLACK_TYPE) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		}
+		throw new RuntimeException("can not find king");
+	}
+
+	/**
+	 * 寻找将的位置
+	 */
+	protected int findKingPos(byte[][] board, Role role) {
+		if (role == Role.RED) {
+			for (int x = 0; x < 3; x++) {
+				for (int y = 3; y <= 5; y++) {
+					byte type = board[x][y];
+					if (type == King.RED_TYPE) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		} else {
+			for (int x = 7; x <= 9; x++) {
+				for (int y = 3; y <= 5; y++) {
+					byte type = board[x][y];
+					if (type == King.BLACK_TYPE) {
 						return ChessTools.toPosition(x, y);
 					}
 				}
@@ -287,12 +329,36 @@ public abstract class AbstractChessPiece implements Cloneable {
 	}
 
 	protected void recordReachablePosition(int position) {
-		reachableNum++;
-		reachablePositions[reachableNum] = (byte) position;
+		reachablePositions[++reachableNum] = (byte) position;
 	}
 
 	protected boolean isValid(int x, int y) {
 		return x >= 0 && x < 10 && y >= 0 && y < 9;
+	}
+
+	protected int findKingPositionByName(byte[][] board) {
+		if (isRed()) {
+			for (int x = 7; x <= 9; x++) {
+				for (int y = 3; y <= 5; y++) {
+					byte type = board[x][y];
+					if (type == King.BLACK_TYPE) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		} else {
+			for (int x = 0; x <= 2; x++) {
+				for (int y = 3; y <= 5; y++) {
+					byte type = board[x][y];
+					if (type == King.RED_TYPE) {
+						return ChessTools.toPosition(x, y);
+					}
+				}
+			}
+		}
+
+		System.out.println(" --------- ");
+		throw new RuntimeException();
 	}
 
 	protected int findKingPositionByName(AbstractChessPiece[][] allPiece) {

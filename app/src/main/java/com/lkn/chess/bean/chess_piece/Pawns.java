@@ -12,8 +12,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Pawns extends AbstractChessPiece {
-	public static final int RED_NUM = 7;
-	public static final int BLACK_NUM = 8;
+	public static final int RED_TYPE = 7;
+	public static final int BLACK_TYPE = 14;
 	public static final int BASE_VAL = 30;
 
 	public Pawns(Role role) {
@@ -31,7 +31,7 @@ public class Pawns extends AbstractChessPiece {
 			this.setName("卒");
 			this.setShowName("卒");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 	}
 	
 	/**
@@ -57,7 +57,7 @@ public class Pawns extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 7 : 14);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -69,9 +69,30 @@ public class Pawns extends AbstractChessPiece {
 			return arr[x][y];
 		}
 
-		int eatenVal = eatenValue(board, position, role);
-//		int eatenVal = 0;
-		return Math.max(0, arr[x][y] - eatenVal);
+		boolean isFaceGone = isFaceGone(board, position, role);
+		int attach = isFaceGone ? 10 : 0;
+
+		return Math.max(0, arr[x][y] + attach);
+	}
+
+	private boolean isFaceGone(ChessBoard board, int position, Role role) {
+		byte[][] invertBoard = board.getInvertBoard();
+		int x = ChessTools.fetchX(position);
+		int y = ChessTools.fetchY(position);
+		if (role == Role.RED) {
+			if (x <= 4) {
+				return invertBoard[y][4] != BLACK_TYPE
+						&& invertBoard[y][5] != BLACK_TYPE
+						&& invertBoard[y][6] != BLACK_TYPE;
+			}
+		} else {
+			if (x >= 5) {
+				return invertBoard[y][5] != RED_TYPE
+						&& invertBoard[y][4] != RED_TYPE
+						&& invertBoard[y][3] != RED_TYPE;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -130,12 +151,12 @@ public class Pawns extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
 
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void findReachablePositions(int currX, int currY, byte[][] allPiece, boolean containsProtectedPiece) {
 		if (isRed()) {
 			if (currX <= 4) {
 				tryReach(currX + 1, currY, allPiece, containsProtectedPiece);
@@ -155,15 +176,15 @@ public class Pawns extends AbstractChessPiece {
 		}
 	}
 
-	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void tryReach(int x, int y, byte[][] allPiece, boolean containsProtectedPiece) {
 		if (!isValid(x, y)) {
 			return;
 		}
-		AbstractChessPiece piece = allPiece[x][y];
-		if (piece == null || isEnemy(this, piece)) {
+		byte type = allPiece[x][y];
+		if (type == -1 || isEnemy(this, type)) {
 			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
-		if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+		if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
 	}

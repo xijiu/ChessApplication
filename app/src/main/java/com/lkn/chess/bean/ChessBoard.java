@@ -2,8 +2,6 @@ package com.lkn.chess.bean;
 
 import com.lkn.chess.BitArray;
 import com.lkn.chess.ChessTools;
-import com.lkn.chess.GamePlayHigh;
-import com.lkn.chess.PubTools;
 import com.lkn.chess.bean.chess_piece.AbstractChessPiece;
 import com.lkn.chess.bean.chess_piece.Cannons;
 import com.lkn.chess.bean.chess_piece.Elephants;
@@ -37,6 +35,8 @@ public class ChessBoard {
 	/** 10行9列的棋盘 */
 	private final byte[][] board = new byte[10][9];
 
+	private final byte[][] invertBoard = new byte[9][10];
+
 	public Map<String, Position> getPositionMap() {
 		return positionMap;
 	}
@@ -65,7 +65,7 @@ public class ChessBoard {
 				byte size = positionArr[0];
 				for (int i = 1; i <= size; i++) {
 					int position = positionArr[i];
-					if (hasPiece(allPiece, position)) {
+					if (hasPiece(position)) {
 						int[][] arr = piece.isRed() ? redNextStepPositionArr : blackNextStepPositionArr;
 						int length = arr[position][0];
 						arr[position][length + 1] = piece.getDefaultVal();
@@ -76,9 +76,8 @@ public class ChessBoard {
 		}
 	}
 
-	private boolean hasPiece(AbstractChessPiece[][] arr, int position) {
-		AbstractChessPiece piece = arr[position / 10][position % 10];
-		return piece != null;
+	private boolean hasPiece(int position) {
+		return board[position / 10][position % 10] != -1;
 	}
 
 	/**
@@ -143,10 +142,8 @@ public class ChessBoard {
 	public int toHashCode() {
 		int index = 0;
 		for (int x = 0; x < 10; x++) {
-			for (int y = 0; y < 9; y++) {
-				AbstractChessPiece piece = allPiece[x][y];
-				tmpByte[index++] = piece != null ? piece.type() : -1;
-			}
+			System.arraycopy(board[x], 0, tmpByte, index, 9);
+			index += 9;
 		}
 		return Arrays.hashCode(tmpByte);
 	}
@@ -206,11 +203,17 @@ public class ChessBoard {
 		}
 		Arrays.fill(redPieceArr, (byte) -1);
 		Arrays.fill(blackPieceArr, (byte) -1);
+		for (byte[] arrTmp : board) {
+			Arrays.fill(arrTmp, (byte) -1);
+		}
+		for (byte[] arrTmp : invertBoard) {
+			Arrays.fill(arrTmp, (byte) -1);
+		}
 	}
 
 	private void initForTest() {
 //		loadPieceFromStr("0_0_3_0_5_4_0_0_13_0_0_0_0_4_0_0_0_0_2_0_6_0_3_0_0_0_0_0_0_0_0_0_0_7_0_0_7_0_0_8_0_0_0_0_0_0_0_0_0_0_1_0_0_14_0_0_7_0_0_2_9_0_0_0_0_0_0_10_0_0_0_0_0_0_0_0_9_0_0_0_0_0_0_10_11_12_11_0_0_0");
-		loadPieceFromStr("0_0_3_0_5_4_3_0_13_0_0_0_0_4_0_0_0_0_2_0_6_0_0_0_0_0_0_0_0_0_0_0_0_7_0_0_7_0_0_8_0_0_0_0_0_0_0_0_0_0_1_0_0_14_0_0_7_0_0_2_0_0_0_0_0_0_0_10_0_0_0_9_0_0_0_0_9_0_0_0_0_0_0_10_11_12_11_0_0_0");
+		loadPieceFromStr("1_0_3_4_5_4_3_1_0_0_0_0_0_0_0_0_0_0_2_0_6_8_6_0_2_0_0_7_0_0_0_7_0_7_0_7_0_0_7_0_0_0_0_0_0_0_0_14_0_0_0_0_0_0_14_0_0_0_14_0_14_0_14_0_13_9_0_0_0_0_13_0_0_0_0_0_0_0_0_0_0_0_8_10_11_12_11_10_9_0");
 //		int val = new GamePlayHigh().computeChessValue(this, Role.RED);
 //		System.out.println("val is val is " + val);
 	}
@@ -279,23 +282,27 @@ public class ChessBoard {
 	}
 
 	private void setPieceToBoard(int position, AbstractChessPiece piece) {
+		byte val = -1;
+		if (piece instanceof Cannons) {
+			val = (byte) (piece.isRed() ? Cannons.RED_TYPE : Cannons.BLACK_TYPE);
+		} else if (piece instanceof Elephants) {
+			val = (byte) (piece.isRed() ? Elephants.RED_TYPE : Elephants.BLACK_TYPE);
+		} else if (piece instanceof Horse) {
+			val = (byte) (piece.isRed() ? Horse.RED_TYPE : Horse.BLACK_TYPE);
+		} else if (piece instanceof King) {
+			val = (byte) (piece.isRed() ? King.RED_TYPE : King.BLACK_TYPE);
+		} else if (piece instanceof Mandarins) {
+			val = (byte) (piece.isRed() ? Mandarins.RED_TYPE : Mandarins.BLACK_TYPE);
+		} else if (piece instanceof Pawns) {
+			val = (byte) (piece.isRed() ? Pawns.RED_TYPE : Pawns.BLACK_TYPE);
+		} else if (piece instanceof Rooks) {
+			val = (byte) (piece.isRed() ? Rooks.RED_TYPE : Rooks.BLACK_TYPE);
+		}
+
 		int x = ChessTools.fetchX(position);
 		int y = ChessTools.fetchY(position);
-		if (piece instanceof Cannons) {
-			board[x][y] = (byte) (piece.isRed() ? Horse.RED_NUM : Horse.BLACK_NUM);
-		} else if (piece instanceof Elephants) {
-			board[x][y] = (byte) (piece.isRed() ? Elephants.RED_NUM : Elephants.BLACK_NUM);
-		} else if (piece instanceof Horse) {
-			board[x][y] = (byte) (piece.isRed() ? Horse.RED_NUM : Horse.BLACK_NUM);
-		} else if (piece instanceof King) {
-			board[x][y] = (byte) (piece.isRed() ? King.RED_NUM : King.BLACK_NUM);
-		} else if (piece instanceof Mandarins) {
-			board[x][y] = (byte) (piece.isRed() ? Mandarins.RED_NUM : Mandarins.BLACK_NUM);
-		} else if (piece instanceof Pawns) {
-			board[x][y] = (byte) (piece.isRed() ? Pawns.RED_NUM : Pawns.BLACK_NUM);
-		} else if (piece instanceof Rooks) {
-			board[x][y] = (byte) (piece.isRed() ? Rooks.RED_NUM : Rooks.BLACK_NUM);
-		}
+		board[x][y] = val;
+		invertBoard[y][x] = val;
 	}
 
 	/**
@@ -319,6 +326,11 @@ public class ChessBoard {
 
 		byte[] pieceArr = piece.isRed() ? redPieceArr : blackPieceArr;
 		pieceArr[piece.getPieceIndex()] = (byte) position;
+
+		int x = ChessTools.fetchX(position);
+		int y = ChessTools.fetchY(position);
+		board[x][y] = piece.type();
+		invertBoard[y][x] = piece.type();
 	}
 
 	/**
@@ -342,10 +354,15 @@ public class ChessBoard {
 	/**
 	 * 将目标位置的棋子从棋盘上拿下
 	 *
-	 * @param removePosition	目标位置
+	 * @param removePosition    目标位置
 	 */
 	private void removePiece(int removePosition) {
 		AbstractChessPiece removePiece = ChessTools.removePiece(allPiece, removePosition);
+
+		int x = ChessTools.fetchX(removePosition);
+		int y = ChessTools.fetchY(removePosition);
+		board[x][y] = -1;
+		invertBoard[y][x] = -1;
 
 		if (removePiece.isRed()) {
 			redPieceArr[removePiece.getPieceIndex()] = -1;
@@ -367,6 +384,16 @@ public class ChessBoard {
 
 		byte[] pieceArr = piece.isRed() ? redPieceArr : blackPieceArr;
 		pieceArr[piece.getPieceIndex()] = (byte) targetPosition;
+
+		int x = ChessTools.fetchX(targetPosition);
+		int y = ChessTools.fetchY(targetPosition);
+		board[x][y] = piece.type();
+		invertBoard[y][x] = piece.type();
+
+		x = ChessTools.fetchX(sourcePosition);
+		y = ChessTools.fetchY(sourcePosition);
+		board[x][y] = -1;
+		invertBoard[y][x] = -1;
 	}
 
 	public void print() {
@@ -435,5 +462,13 @@ public class ChessBoard {
 
 	public void setBlackPieceArr(byte[] blackPieceArr) {
 		this.blackPieceArr = blackPieceArr;
+	}
+
+	public byte[][] getBoard() {
+		return board;
+	}
+
+	public byte[][] getInvertBoard() {
+		return invertBoard;
 	}
 }

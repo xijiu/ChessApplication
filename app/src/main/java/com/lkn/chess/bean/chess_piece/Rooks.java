@@ -12,8 +12,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Rooks extends AbstractChessPiece {
-	public static final int RED_NUM = 1;
-	public static final int BLACK_NUM = 10;
+	public static final int RED_TYPE = 1;
+	public static final int BLACK_TYPE = 8;
 
 	public Rooks(Role role) {
 		this(null, role);
@@ -25,7 +25,7 @@ public class Rooks extends AbstractChessPiece {
 		this.setDefaultVal(500);
 		this.setName("车");
 		this.setShowName("車");
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class Rooks extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 1 : 8);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -85,15 +85,15 @@ public class Rooks extends AbstractChessPiece {
 	}
 
 	private boolean isKingCheck(ChessBoard board, int currX, int currY) {
-		AbstractChessPiece[][] allPiece = board.getAllPiece();
-		int kingPos = findKingPos(allPiece, getPLAYER_ROLE().nextRole());
+		byte[][] boardArr = board.getBoard();
+		int kingPos = findKingPos(boardArr, getPLAYER_ROLE().nextRole());
 		int kingX = ChessTools.fetchX(kingPos);
 		int kingY = ChessTools.fetchY(kingPos);
 		if (kingX == currX) {
 			int startY = Math.min(kingY, currY);
 			int endY = Math.max(kingY, currY);
 			for (int y = startY + 1; y < endY; y++) {
-				if (allPiece[currX][y] != null) {
+				if (boardArr[currX][y] != -1) {
 					return false;
 				}
 			}
@@ -103,7 +103,7 @@ public class Rooks extends AbstractChessPiece {
 			int startX = Math.min(kingX, currX);
 			int endX = Math.max(kingX, currX);
 			for (int x = startX + 1; x < endX; x++) {
-				if (allPiece[x][currY] != null) {
+				if (boardArr[x][currY] != -1) {
 					return false;
 				}
 			}
@@ -136,20 +136,20 @@ public class Rooks extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
 
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
-		AbstractChessPiece piece = null;
+	private void findReachablePositions(int currX, int currY, byte[][] allPiece, boolean containsProtectedPiece) {
+		byte type;
 		// 向上找
 		for (int i = currX + 1; i < 10; i++) {
 			int position = ChessTools.toPosition(i, currY);
-			if ((piece = allPiece[i][currY]) == null) {
+			if ((type = allPiece[i][currY]) == -1) {
 				recordReachablePosition(position);
 			} else {
-				if (isEnemy(this, piece)) {
+				if (isEnemy(this, type)) {
 					recordReachablePosition(position);
 				} else {
 					if (containsProtectedPiece) {
@@ -159,13 +159,14 @@ public class Rooks extends AbstractChessPiece {
 				break;
 			}
 		}
+
 		// 向下找
 		for (int i = currX - 1; i >= 0; i--) {
 			int position = ChessTools.toPosition(i, currY);
-			if ((piece = allPiece[i][currY]) == null) {
+			if ((type = allPiece[i][currY]) == -1) {
 				recordReachablePosition(position);
 			} else {
-				if (isEnemy(this, piece)) {
+				if (isEnemy(this, type)) {
 					recordReachablePosition(position);
 				} else {
 					if (containsProtectedPiece) {
@@ -178,10 +179,10 @@ public class Rooks extends AbstractChessPiece {
 		// 向右找
 		for (int y = currY + 1; y < 9; y++) {
 			int position = ChessTools.toPosition(currX, y);
-			if ((piece = allPiece[currX][y]) == null) {
+			if ((type = allPiece[currX][y]) == -1) {
 				recordReachablePosition(position);
 			} else {
-				if (isEnemy(this, piece)) {
+				if (isEnemy(this, type)) {
 					recordReachablePosition(position);
 				} else {
 					if (containsProtectedPiece) {
@@ -194,10 +195,10 @@ public class Rooks extends AbstractChessPiece {
 		// 向左找
 		for (int y = currY - 1; y >= 0; y--) {
 			int position = ChessTools.toPosition(currX, y);
-			if ((piece = allPiece[currX][y]) == null) {
+			if ((type = allPiece[currX][y]) == -1) {
 				recordReachablePosition(position);
 			} else {
-				if (isEnemy(this, piece)) {
+				if (isEnemy(this, type)) {
 					recordReachablePosition(position);
 				} else {
 					if (containsProtectedPiece) {

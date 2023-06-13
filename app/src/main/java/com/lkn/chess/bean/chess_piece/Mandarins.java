@@ -12,8 +12,8 @@ import com.lkn.chess.bean.Role;
  * @author:likn1	Jan 5, 2016  3:53:53 PM
  */
 public class Mandarins extends AbstractChessPiece {
-	public static final int RED_NUM = 4;
-	public static final int BLACK_NUM = 13;
+	public static final int RED_TYPE = 4;
+	public static final int BLACK_TYPE = 11;
 
 	public Mandarins(Role role) {
 		this(null, role);
@@ -30,7 +30,7 @@ public class Mandarins extends AbstractChessPiece {
 			this.setName("士");
 			this.setShowName("士");
 		}
-		initNum(role, RED_NUM, BLACK_NUM);
+		initNum(role, RED_TYPE, BLACK_TYPE);
 	}
 	
 	
@@ -57,7 +57,7 @@ public class Mandarins extends AbstractChessPiece {
 
 	@Override
 	public byte type() {
-		return (byte) (isRed() ? 4 : 11);
+		return (byte) (isRed() ? RED_TYPE : BLACK_TYPE);
 	}
 
 	@Override
@@ -108,12 +108,12 @@ public class Mandarins extends AbstractChessPiece {
 		int currX = ChessTools.fetchX(currPosition);
 		int currY = ChessTools.fetchY(currPosition);
 
-		findReachablePositions(currX, currY, board.getAllPiece(), containsProtectedPiece);
+		findReachablePositions(currX, currY, board.getBoard(), containsProtectedPiece);
 		reachablePositions[0] = (byte) reachableNum;
 		return reachablePositions;
 	}
 
-	private void findReachablePositions(int currX, int currY, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
+	private void findReachablePositions(int currX, int currY, byte[][] allPiece, boolean containsProtectedPiece) {
 		if (isRed()) {
 			if (currX == 1 && currY == 4) {
 				tryReach(currX - 1, currY - 1, allPiece, containsProtectedPiece);
@@ -135,12 +135,12 @@ public class Mandarins extends AbstractChessPiece {
 		}
 	}
 
-	private void tryReach(int x, int y, AbstractChessPiece[][] allPiece, boolean containsProtectedPiece) {
-		AbstractChessPiece piece = allPiece[x][y];
-		if (piece == null || isEnemy(this, piece)) {
+	private void tryReach(int x, int y, byte[][] allPiece, boolean containsProtectedPiece) {
+		byte type = allPiece[x][y];
+		if (type == -1 || isEnemy(this, type)) {
 			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
-		if (piece != null && isFriend(this, piece) && containsProtectedPiece) {
+		if (type != -1 && isFriend(this, type) && containsProtectedPiece) {
 			recordReachablePosition(ChessTools.toPosition(x, y));
 		}
 	}
